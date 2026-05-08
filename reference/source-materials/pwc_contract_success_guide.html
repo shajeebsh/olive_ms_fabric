@@ -1,0 +1,289 @@
+
+<h2 class="sr-only">Interactive guide to succeeding in a PwC contract role, covering the first 90 days, how to build reputation, avoid common mistakes, and position for extension.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:1rem 0 1.25rem}
+.tab{padding:6px 16px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px}
+.card-body{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.phase-row{display:grid;grid-template-columns:90px 1fr;gap:12px;margin-bottom:16px;align-items:start}
+.phase-badge{border-radius:var(--border-radius-md);padding:8px 10px;text-align:center;font-size:12px;font-weight:500}
+.badge-1{background:#E6F1FB;color:#0C447C}
+.badge-2{background:#EAF3DE;color:#27500A}
+.badge-3{background:#FAEEDA;color:#633806}
+.badge-4{background:#EDE9FE;color:#3C3489}
+.phase-content{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.phase-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.do-dont{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.do-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:12px 14px}
+.dont-box{background:var(--color-background-danger);border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);padding:12px 14px}
+.do-box .bx-title{font-size:12px;font-weight:500;color:var(--color-text-success);margin-bottom:8px}
+.dont-box .bx-title{font-size:12px;font-weight:500;color:var(--color-text-danger);margin-bottom:8px}
+li.di{font-size:12px;color:var(--color-text-secondary);line-height:1.8;list-style:none;padding-left:14px;position:relative}
+li.di::before{position:absolute;left:0;font-size:11px}
+.do-box li.di::before{content:"✓";color:var(--color-text-success)}
+.dont-box li.di::before{content:"✗";color:var(--color-text-danger)}
+.tip-box{background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin-bottom:12px}
+.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-info);line-height:1.6;margin-bottom:12px}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;text-align:center}
+.metric-num{font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.metric-label{font-size:11px;color:var(--color-text-secondary);margin-top:4px}
+.week-row{display:grid;grid-template-columns:60px 1fr;gap:10px;margin-bottom:10px;align-items:start}
+.week-num{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:6px;text-align:center;font-size:12px;font-weight:500;color:var(--color-text-secondary)}
+.week-content{font-size:13px;color:var(--color-text-secondary);line-height:1.6;padding-top:4px}
+.week-title{font-weight:500;color:var(--color-text-primary)}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);margin:2px;font-weight:500}
+.pill-blue{background:#E6F1FB;color:#0C447C}
+.pill-green{background:#EAF3DE;color:#27500A}
+.pill-amber{background:#FAEEDA;color:#633806}
+.pill-red{background:#FCEBEB;color:#791F1F}
+.pill-purple{background:#EEEDFE;color:#3C3489}
+.divider{border:none;border-top:0.5px solid var(--color-border-tertiary);margin:16px 0}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.btn{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:12px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary)}
+.btn:hover{background:var(--color-background-secondary)}
+</style>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('start',this)">Where to start</div>
+  <div class="tab" onclick="show('days',this)">First 90 days</div>
+  <div class="tab" onclick="show('impress',this)">Impressing the manager</div>
+  <div class="tab" onclick="show('rep',this)">Building reputation</div>
+  <div class="tab" onclick="show('mistakes',this)">Mistakes to avoid</div>
+  <div class="tab" onclick="show('extend',this)">Getting extended</div>
+</div>
+
+<div id="start" class="panel active">
+  <div class="section-label">Before day one</div>
+  <div class="card">
+    <div class="card-title">The single most important mindset shift</div>
+    <div class="card-body">You are not arriving as a technical resource who executes tasks. You are arriving as a <strong style="color:var(--color-text-primary)">trusted advisor who happens to be technical</strong>. PwC sells advisory — their managers notice who thinks like a consultant and who thinks like a developer. Your CV proves you can build. Day one starts proving you can <em>lead</em>.</div>
+  </div>
+
+  <div class="section-label" style="margin-top:16px">Practical preparation — before you start</div>
+
+  <div class="phase-row">
+    <div class="phase-badge badge-1">Research<br>the client</div>
+    <div class="phase-content">
+      <div class="phase-title">Understand the university before your first call</div>
+      Find the university website. Read about their faculties, medical school, and any published digital strategy. Know their size — how many students, campuses, key departments. If they have a published annual report, skim it. When a manager mentions a faculty or initiative, you want to recognise it immediately.
+    </div>
+  </div>
+
+  <div class="phase-row">
+    <div class="phase-badge badge-2">Prepare<br>questions</div>
+    <div class="phase-content">
+      <div class="phase-title">Write 10 intelligent discovery questions</div>
+      Great questions on day one signal maturity. Examples: "What does success look like at 6 months for the client?" — "Who are the key stakeholders and what are their biggest frustrations?" — "Is there a data steward or IT contact already identified at the university?" — "What previous attempts at data consolidation have been tried and why didn't they succeed?"
+    </div>
+  </div>
+
+  <div class="phase-row">
+    <div class="phase-badge badge-3">Know your<br>own work</div>
+    <div class="phase-content">
+      <div class="phase-title">Re-read the implementation guide and script library</div>
+      You will be asked questions on day one or day two. Know the architecture cold — Bronze/Silver/Gold separation rationale, why Direct Lake, why watermark CDC over log-based. Have a crisp one-line answer for each decision. Nothing undermines credibility faster than being unable to explain your own design choices.
+    </div>
+  </div>
+
+  <div class="phase-row">
+    <div class="phase-badge badge-4">Set up<br>your tools</div>
+    <div class="phase-content">
+      <div class="phase-title">Have your environment ready on day one</div>
+      Ask PwC ahead of time what tools you will use — Teams, Azure DevOps, JIRA, Confluence. Set up your accounts before you start. Arrive with VS Code, Azure Data Studio, and a Fabric trial workspace already configured. Not fumbling with setup on day one sends a strong signal.
+    </div>
+  </div>
+</div>
+
+<div id="days" class="panel">
+  <div class="metric-grid">
+    <div class="metric"><div class="metric-num">Day 1–10</div><div class="metric-label">Listen & discover</div></div>
+    <div class="metric"><div class="metric-num">Day 11–30</div><div class="metric-label">Deliver something visible</div></div>
+    <div class="metric"><div class="metric-num">Day 31–60</div><div class="metric-label">Own your domain</div></div>
+    <div class="metric"><div class="metric-num">Day 61–90</div><div class="metric-label">Lead and mentor</div></div>
+  </div>
+
+  <div class="section-label">Week by week</div>
+
+  <div class="week-row">
+    <div class="week-num">Week 1</div>
+    <div class="week-content"><span class="week-title">Shut up and listen. </span>Attend every meeting, take detailed notes, ask one smart question per meeting (not five). Map who the real decision-makers are versus who just attends. Identify the person at the university who is most frustrated — they will become your biggest advocate if you solve their pain.</div>
+  </div>
+  <div class="week-row">
+    <div class="week-num">Week 2</div>
+    <div class="week-content"><span class="week-title">Do the source inventory yourself. </span>Do not wait to be asked. Get access to the Excel files and spend a day profiling them with NB_00. Come back to the manager with a written findings document — column quality issues, date format inconsistencies, missing keys. This alone will impress. Nobody expects a contractor to proactively produce a data quality report in week two.</div>
+  </div>
+  <div class="week-row">
+    <div class="week-num">Week 3</div>
+    <div class="week-content"><span class="week-title">Deliver something the client can see. </span>Build a rough Power BI prototype on synthetic or sample data. Even if it has no real data in it yet, show the university stakeholders what the Training Dashboard will look like. People who are used to Excel spreadsheets will be genuinely impressed by a live dashboard prototype in week three.</div>
+  </div>
+  <div class="week-row">
+    <div class="week-num">Week 4</div>
+    <div class="week-content"><span class="week-title">Produce the STTM documentation. </span>Write the Source-to-Target Mapping document proactively. This signals you understand the professional standard for data projects. Most contractors skip documentation until the end. Doing it in week four will make the PwC manager's life significantly easier.</div>
+  </div>
+  <div class="week-row">
+    <div class="week-num">Weeks 5–8</div>
+    <div class="week-content"><span class="week-title">Bronze and Silver pipelines live in DEV. </span>Get all ingestion notebooks running, DQ checks passing, Silver entities loading. Run a weekly status update to the PwC manager — one page, three sections: what was done, what is next, any blockers. Short and consistent is better than long and occasional.</div>
+  </div>
+  <div class="week-row">
+    <div class="week-num">Weeks 9–12</div>
+    <div class="week-content"><span class="week-title">Gold layer and first production dashboard. </span>UAT session with the university stakeholders. Present the Training Dashboard and Clinical Hours report. Capture feedback in a written log. Showing that you manage feedback professionally, not defensively, is how PwC managers decide who gets extended.</div>
+  </div>
+
+  <div class="tip-box" style="margin-top:4px">The difference between a contractor who gets extended and one who doesn't is nearly always visible in weeks 2 and 3. Early proactive delivery creates a perception of competence that carries you through the entire engagement.</div>
+</div>
+
+<div id="impress" class="panel">
+  <div class="section-label">What PwC managers actually watch for</div>
+
+  <div class="card">
+    <div class="card-title">Communicate up before you are asked</div>
+    <div class="card-body">Send a brief written update every Friday — even if nothing dramatic happened. Three bullets: completed, in progress, any blockers needing their input. Managers who have to chase for status updates lose confidence in contractors fast. Managers who receive unsolicited, concise updates trust you more each week.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Translate technical work into business language</div>
+    <div class="card-body">When you finish the Bronze ingestion layer, do not say "Bronze pipelines are live." Say "We now have a reliable, automated feed pulling all five Excel sources into a governed raw data layer — the university no longer needs to manually send us files." Every technical milestone should have a business sentence attached to it.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bring the solution, not just the problem</div>
+    <div class="card-body">Every time you raise a blocker or issue, come with at least one proposed solution. "The HR API doesn't have a delta endpoint — I've identified two options: polling every 15 minutes via Structured Streaming, or requesting a webhook from the vendor. I recommend option one as it requires no change from them. Happy to proceed if you agree." This is the difference between a contractor and a consultant.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Show awareness of the wider engagement</div>
+    <div class="card-body">PwC is a services business. Ask the manager early on if there are other workstreams on this engagement — change management, process design, training. Offer to support a briefing or write a technical summary for a stakeholder presentation. Contractors who only do their lane are harder to justify keeping. Ones who make the whole engagement look good get extended.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Own your mistakes fast and clean</div>
+    <div class="card-body">If a pipeline breaks in production, a DQ check fails, or you miss a deadline — tell the manager before they find out from someone else. "The Silver transformation notebook failed this morning due to an unexpected null in the source data. I have identified the fix and it will be in DEV by 2pm today." Speed of acknowledgement matters far more than the mistake itself.</div>
+  </div>
+
+  <div class="tip-box">PwC managers are often under pressure from their own engagement leads. Make your manager look good to their boss — that is the fastest path to a strong relationship.</div>
+</div>
+
+<div id="rep" class="panel">
+  <div class="section-label">Reputation is built in small moments, not big gestures</div>
+
+  <div class="do-dont">
+    <div class="do-box">
+      <div class="bx-title">Do these consistently</div>
+      <ul>
+        <li class="di">Be the first person to respond to a Teams message</li>
+        <li class="di">Always have your camera on in video calls</li>
+        <li class="di">Take notes in every meeting and share them after</li>
+        <li class="di">Arrive 2 minutes early to every call</li>
+        <li class="di">Deliver what you said you would, exactly when you said</li>
+        <li class="di">Acknowledge other people's contributions publicly</li>
+        <li class="di">Ask the university stakeholders about their experience, not just their requirements</li>
+        <li class="di">Write documentation nobody asked for but everyone needs</li>
+        <li class="di">Raise risks early — even ones you can solve yourself</li>
+        <li class="di">Say "I'll find out and come back to you" rather than guessing</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <div class="bx-title">Never do these</div>
+      <ul>
+        <li class="di">Go quiet when things are difficult</li>
+        <li class="di">Disagree with the client in front of the PwC manager</li>
+        <li class="di">Promise a delivery date you are not 90% sure of</li>
+        <li class="di">Use jargon in stakeholder meetings</li>
+        <li class="di">Wait to be told what to do next</li>
+        <li class="di">Complain about the client's data quality to the client</li>
+        <li class="di">Skip the Friday update even once</li>
+        <li class="di">Let a blocker sit for more than 24 hours without escalating</li>
+        <li class="di">Over-engineer when a simple solution works</li>
+        <li class="di">Talk about other clients or past employers negatively</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:4px">Reputation with the university client specifically</div>
+
+  <div class="card">
+    <div class="card-title">The doctors and training staff are not data people — adapt accordingly</div>
+    <div class="card-body">When meeting with clinical staff or training managers, ask about their day-to-day frustrations first. A surgeon does not care about Delta Lake. They care about not having to chase someone for a report every Monday. When you show them the Clinical Hours dashboard for the first time, frame it as "you will never need to manually compile this in Excel again" — not as "we built a Power BI Direct Lake report over a star schema."</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Become the person who makes things easier for everyone</div>
+    <div class="card-body">Spot things outside your strict scope and mention them. If you notice the training team sends manual reminder emails for overdue compliance training, mention that the platform you are building could trigger those automatically. You do not need to build it — just naming it earns you significant goodwill and positions you as someone who understands the business, not just the data.</div>
+  </div>
+
+  <div class="info-box">Reputation compounds. One week of strong delivery is forgotten. Six weeks of consistent delivery, clear communication, and proactive thinking makes you genuinely irreplaceable by month three.</div>
+</div>
+
+<div id="mistakes" class="panel">
+  <div class="section-label">The most common ways contractors fail in consulting engagements</div>
+
+  <div class="card">
+    <div class="card-title">Going too deep, too fast on technical solutions</div>
+    <div class="card-body">The number one mistake of strong technical contractors. You know Fabric deeply. The temptation is to propose the most complete, elegant architecture immediately. Resist it. Spend the first two weeks understanding the actual problem before proposing anything. An architecture proposed before you understand the constraints will need to be revised — and every revision costs credibility. Say "I want to profile the sources before I finalise the design" — this is respected, not seen as slow.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Underestimating the stakeholder management side</div>
+    <div class="card-body">This is a university with doctors, surgeons, training managers, and IT staff. Each group has different priorities, different levels of data literacy, and different reasons to be resistant to change. A data platform that nobody adopts is a failed project regardless of how well it is engineered. Spend time with each user group. Understand what they are afraid of losing, not just what they want to gain.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Scope creep without flagging it</div>
+    <div class="card-body">The university will ask for things outside the original spec. Especially since they have no defined KPIs and will form requirements as they see prototypes. Every request that is outside agreed scope must be logged and discussed with the PwC manager before you commit to it. Even if you could build it in an hour, doing it silently teaches the client that scope is unlimited. It will accelerate and bury you by month two.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Waiting for perfect data before showing something</div>
+    <div class="card-body">Contractors who wait until everything is perfect before showing the client anything always disappoint. Show rough, early, honest prototypes. Frame them correctly — "this is built on sample data to validate the design, not production quality yet." Early visibility builds trust. Late reveals create anxiety.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Treating the PwC manager as an obstacle rather than an ally</div>
+    <div class="card-body">Your manager has context you do not have — political dynamics, budget constraints, the client's history. Treat them as a partner. Ask them what would make their life easier on this engagement. Ask if there is anything you can do that is not in your job description. Managers extend contractors they enjoy working with, not just technically competent ones.</div>
+  </div>
+</div>
+
+<div id="extend" class="panel">
+  <div class="section-label">The extension conversation starts in month two, not month five</div>
+
+  <div class="card">
+    <div class="card-title">Make yourself indispensable without making yourself irreplaceable</div>
+    <div class="card-body">There is an important difference. Indispensable means the engagement goes better with you on it. Irreplaceable means you are the only one who understands it — which is a risk, not a strength. Write documentation. Build runbooks. Train at least one person at the university to understand the platform basics. This paradoxically makes you more likely to be extended, not less — it shows you are thinking about the long-term success of the project.</div>
+  </div>
+
+  <div class="section-label" style="margin-top:4px">Evidence you should be building from day one</div>
+
+  <div class="week-row">
+    <div class="week-num" style="background:var(--color-background-info);color:var(--color-text-info)">Value</div>
+    <div class="week-content">Keep a private log of every measurable outcome you deliver — hours saved, processes automated, errors caught by DQ checks, stakeholders who said something positive. By month five you want to be able to say "since joining, the platform has automated 40+ hours per week of manual reporting, caught 12 data quality issues before they reached the business, and is used daily by 8 university staff." Numbers matter in extension conversations.</div>
+  </div>
+  <div class="week-row">
+    <div class="week-num" style="background:var(--color-background-success);color:var(--color-text-success)">Trust</div>
+    <div class="week-content">Trust is the only currency that converts to an extension. Technical skill gets you through the door. Trust keeps you in the room. Every promise kept, every risk flagged early, every problem solved before it became visible — these are trust deposits. Make them daily.</div>
+  </div>
+  <div class="week-row">
+    <div class="week-num" style="background:var(--color-background-warning);color:var(--color-text-warning)">Future</div>
+    <div class="week-content">Around month three or four, start planting the seed of what phase two could look like — the Eventhouse for real-time events, the automated compliance email triggers, the HR analytics module. Not as a sales pitch, as a natural conversation. "Once this phase is stable, there is a lot more we could do with the Eventstream for real-time alerts." Let the manager and client start picturing you in the next phase.</div>
+  </div>
+
+  <div class="tip-box" style="margin-top:4px">The formal extension decision is almost always already made informally 6–8 weeks before the contract end date. The manager forms a view based on your pattern over the whole engagement — not a single brilliant moment at the end.</div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="card-title">The question to ask yourself every Friday</div>
+    <div class="card-body" style="font-size:14px;font-style:italic;color:var(--color-text-primary)">"If I were the PwC manager reviewing this week, would I feel confident that this contractor is in control, communicating clearly, and making the engagement better — or would I have any doubt?"<br><br><span style="font-size:13px;font-style:normal;color:var(--color-text-secondary)">If the answer is anything other than a clear yes, fix it before Monday.</span></div>
+  </div>
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>

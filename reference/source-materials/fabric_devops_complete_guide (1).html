@@ -1,0 +1,487 @@
+
+<h2 class="sr-only">Complete guide to Git integration, deployment pipeline, and document storage strategy for Microsoft Fabric university data platform across DEV, TEST, PROD and GOVERNANCE workspaces.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:1rem 0 1.25rem}
+.tab{padding:6px 16px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px}
+.card-body{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.code-block{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;font-family:var(--font-mono);font-size:12px;color:var(--color-text-primary);line-height:1.8;margin:8px 0;overflow-x:auto;white-space:pre}
+.step-row{display:grid;grid-template-columns:28px 1fr;gap:12px;margin-bottom:14px;align-items:start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--color-background-info);color:var(--color-text-info);font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-content{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.step-title{font-weight:500;color:var(--color-text-primary);display:block;margin-bottom:2px}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;margin-top:20px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:var(--border-radius-md);font-weight:500;margin:2px}
+.badge-dev{background:#E6F1FB;color:#0C447C}
+.badge-test{background:#FAEEDA;color:#633806}
+.badge-prod{background:#EAF3DE;color:#27500A}
+.badge-gov{background:#EDE9FE;color:#3C3489}
+.badge-auto{background:#EAF3DE;color:#27500A}
+.badge-manual{background:#FCEBEB;color:#791F1F}
+.tip-box{background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin:10px 0}
+.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-info);line-height:1.6;margin:10px 0}
+.success-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-success);line-height:1.6;margin:10px 0}
+.folder-tree{font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary);line-height:2;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 16px;margin:8px 0}
+.folder-tree .dir{color:var(--color-text-info);font-weight:500}
+.folder-tree .file{color:var(--color-text-primary)}
+.folder-tree .comment{color:var(--color-text-tertiary)}
+.ws-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.ws-card{border-radius:var(--border-radius-md);padding:10px 12px;border:0.5px solid}
+.ws-dev{background:#E6F1FB;border-color:#B5D4F4}
+.ws-test{background:#FAEEDA;border-color:#FAC775}
+.ws-prod{background:#EAF3DE;border-color:#C0DD97}
+.ws-gov{background:#EDE9FE;border-color:#CECBF6}
+.ws-title{font-size:13px;font-weight:500;margin-bottom:6px}
+.ws-dev .ws-title{color:#0C447C}
+.ws-test .ws-title{color:#633806}
+.ws-prod .ws-title{color:#27500A}
+.ws-gov .ws-title{color:#3C3489}
+.ws-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.flow-step{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);margin-bottom:8px;position:relative}
+.flow-arrow{text-align:center;font-size:16px;color:var(--color-text-tertiary);margin:2px 0 8px}
+.flow-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.flow-content{flex:1}
+.flow-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px}
+.flow-desc{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.doc-row{display:grid;grid-template-columns:200px 1fr 160px;gap:12px;padding:10px 12px;border-bottom:0.5px solid var(--color-border-tertiary);align-items:start;font-size:13px}
+.doc-row:last-child{border-bottom:none}
+.doc-header{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em}
+.doc-name{color:var(--color-text-primary);font-weight:500}
+.doc-desc{color:var(--color-text-secondary);line-height:1.5}
+.doc-where{font-size:12px}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+.pill-git{background:#E6F1FB;color:#0C447C}
+.pill-conf{background:#EAF3DE;color:#27500A}
+.pill-share{background:#FAEEDA;color:#633806}
+.pill-lake{background:#EDE9FE;color:#3C3489}
+</style>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('git',this)">Git structure</div>
+  <div class="tab" onclick="show('deploy',this)">Deployment flow</div>
+  <div class="tab" onclick="show('workspaces',this)">What lives where</div>
+  <div class="tab" onclick="show('docs',this)">Document storage</div>
+  <div class="tab" onclick="show('governance',this)">Governance workspace</div>
+  <div class="tab" onclick="show('daily',this)">Daily Git workflow</div>
+</div>
+
+<!-- TAB 1: GIT STRUCTURE -->
+<div id="git" class="panel active">
+  <div class="section-label">What is Git doing in this architecture?</div>
+  <div class="card">
+    <div class="card-title">Git stores your code — not your data</div>
+    <div class="card-body">Every Notebook (.ipynb), every Pipeline definition (.json), and every configuration file lives in Git. The <em>data</em> (Delta tables, Parquet files) lives in OneLake. Git gives you version history, the ability to roll back a broken notebook, and the mechanism to promote code from DEV → TEST → PROD without copy-pasting.</div>
+  </div>
+
+  <div class="section-label">Repository structure in Azure DevOps</div>
+  <div class="folder-tree">
+<span class="dir">fabric-university-platform/</span>                <span class="comment">← root repo</span>
+│
+<span class="dir">├── notebooks/</span>                               <span class="comment">← all PySpark notebooks</span>
+│   <span class="dir">├── bronze/</span>
+│   │   <span class="file">├── NB_00_Data_Profiling.ipynb</span>
+│   │   <span class="file">├── NB_02_Bronze_Excel_Ingest.ipynb</span>
+│   │   <span class="file">└── NB_03_Bronze_REST_API_Ingest.ipynb</span>
+│   <span class="dir">├── silver/</span>
+│   │   <span class="file">├── NB_04_Silver_Transformation.ipynb</span>
+│   │   <span class="file">└── NB_05_Bronze_to_Silver_Streaming.ipynb</span>
+│   <span class="dir">├── gold/</span>
+│   │   <span class="file">├── NB_06_Gold_Dimensional_Model.ipynb</span>
+│   │   <span class="file">└── NB_09_PowerBI_Semantic_Model_Prep.ipynb</span>
+│   <span class="dir">└── ops/</span>
+│       <span class="file">├── NB_01_Create_Control_Tables.ipynb</span>
+│       <span class="file">├── NB_07_Data_Quality_Checks.ipynb</span>
+│       <span class="file">├── NB_08_Monitoring_and_Alerting.ipynb</span>
+│       <span class="file">├── NB_10_Purview_Annotations.ipynb</span>
+│       <span class="file">└── NB_11_Delta_Maintenance.ipynb</span>
+│
+<span class="dir">├── pipelines/</span>                               <span class="comment">← Fabric Pipeline JSON definitions</span>
+│   <span class="file">├── PL_Daily_Bronze.json</span>
+│   <span class="file">├── PL_Daily_Silver.json</span>
+│   <span class="file">├── PL_Daily_Gold.json</span>
+│   <span class="file">├── PL_Stream_15min.json</span>
+│   └── <span class="file">PL_Weekly_Maintenance.json</span>
+│
+<span class="dir">├── config/</span>                                  <span class="comment">← environment-specific settings</span>
+│   <span class="file">├── config_dev.json</span>                  <span class="comment">← DEV connection strings</span>
+│   <span class="file">├── config_test.json</span>                 <span class="comment">← TEST connection strings</span>
+│   └── <span class="file">config_prod.json</span>                 <span class="comment">← PROD connection strings</span>
+│
+<span class="dir">├── docs/</span>                                    <span class="comment">← technical documentation</span>
+│   <span class="file">├── STTM_v1.2.xlsx</span>                  <span class="comment">← Source-to-Target Mapping</span>
+│   <span class="file">├── architecture_decision_log.md</span>
+│   └── <span class="file">runbook.md</span>
+│
+<span class="dir">├── tests/</span>                                   <span class="comment">← unit tests for transformation logic</span>
+│   <span class="file">├── test_silver_transformations.py</span>
+│   └── <span class="file">test_dq_rules.py</span>
+│
+└── <span class="file">README.md</span>                               <span class="comment">← setup guide for new engineers</span>
+  </div>
+
+  <div class="section-label">Branch strategy — one branch per environment</div>
+  <div class="code-block">feature/NB-04-silver-staff    ← engineer works here
+        ↓  Pull Request + code review
+develop                       ← TEST workspace tracks this branch
+        ↓  Pull Request + manager approval  
+main                          ← PROD workspace tracks this branch
+
+Rule: NO direct commits to develop or main.
+Every change goes: feature branch → PR → develop → PR → main.</div>
+
+  <div class="info-box">When you connect a Fabric workspace to Git and switch to the <code>develop</code> branch, that workspace <strong>automatically reflects whatever is in develop</strong>. Push a notebook change to develop → TEST workspace updates within seconds. No manual copy-paste ever.</div>
+</div>
+
+<!-- TAB 2: DEPLOYMENT FLOW -->
+<div id="deploy" class="panel">
+  <div class="section-label">How code moves DEV → TEST → PROD step by step</div>
+
+  <div class="flow-step">
+    <div class="flow-icon" style="background:#E6F1FB;color:#0C447C">1</div>
+    <div class="flow-content">
+      <div class="flow-title">Engineer writes code in UNIV-DEV workspace <span class="badge badge-dev">DEV</span></div>
+      <div class="flow-desc">Open a Fabric Notebook in UNIV-DEV. Write and test NB_04_Silver_Transformation. When ready, click <strong>Sync</strong> in the Fabric Git panel — this commits the notebook to your <code>feature/NB-04-silver-staff</code> branch in Azure DevOps automatically.</div>
+    </div>
+  </div>
+  <div class="flow-arrow">↓</div>
+
+  <div class="flow-step">
+    <div class="flow-icon" style="background:#E6F1FB;color:#0C447C">2</div>
+    <div class="flow-content">
+      <div class="flow-title">Raise a Pull Request: feature → develop <span class="badge badge-auto">automatic</span></div>
+      <div class="flow-desc">In Azure DevOps → Repos → Pull Requests → New PR. Source: <code>feature/NB-04-silver-staff</code> → Target: <code>develop</code>. Assign the PwC manager as reviewer. PR description: what changed, why, which DQ checks pass. The CI pipeline runs your unit tests automatically on every PR.</div>
+    </div>
+  </div>
+  <div class="flow-arrow">↓</div>
+
+  <div class="flow-step">
+    <div class="flow-icon" style="background:#FAEEDA;color:#633806">3</div>
+    <div class="flow-content">
+      <div class="flow-title">UNIV-TEST workspace auto-updates <span class="badge badge-test">TEST</span> <span class="badge badge-auto">automatic</span></div>
+      <div class="flow-desc">The moment the PR is merged to <code>develop</code>, UNIV-TEST workspace — which is connected to the <code>develop</code> branch — shows the updated notebook immediately. No manual steps. Run the notebook in TEST against TEST data. Run integration tests. If all green, raise a second PR.</div>
+    </div>
+  </div>
+  <div class="flow-arrow">↓</div>
+
+  <div class="flow-step">
+    <div class="flow-icon" style="background:#FAEEDA;color:#633806">4</div>
+    <div class="flow-content">
+      <div class="flow-title">Raise a Pull Request: develop → main <span class="badge badge-manual">manual approval</span></div>
+      <div class="flow-desc">Source: <code>develop</code> → Target: <code>main</code>. This PR requires approval from the PwC Data Lead (not just the manager). Attach: test run results, DQ scorecard, confirmation of UAT sign-off. No notebook goes to PROD without this gate.</div>
+    </div>
+  </div>
+  <div class="flow-arrow">↓</div>
+
+  <div class="flow-step">
+    <div class="flow-icon" style="background:#EAF3DE;color:#27500A">5</div>
+    <div class="flow-content">
+      <div class="flow-title">UNIV-PROD workspace auto-updates <span class="badge badge-prod">PROD</span> <span class="badge badge-auto">automatic</span></div>
+      <div class="flow-desc">UNIV-PROD is connected to <code>main</code>. Merging the PR updates PROD immediately. The nightly pipeline trigger picks up the new notebook version automatically — no manual restart needed. Verify in Fabric Monitor that the first production run succeeds.</div>
+    </div>
+  </div>
+
+  <div class="tip-box" style="margin-top:12px">Never edit a notebook directly in the PROD workspace. Every change — even a one-line fix — must go through the feature → develop → main flow. This keeps the Git history clean and makes rollbacks trivial.</div>
+
+  <div class="section-label" style="margin-top:16px">How to roll back a bad deployment</div>
+  <div class="code-block">Option 1 — Git revert (preferred):
+  In Azure DevOps → Commits on main → find the bad commit
+  → Revert → creates a new commit undoing the change
+  → PROD workspace auto-updates to the reverted version
+
+Option 2 — Delta time travel (data only):
+  If bad code wrote bad data to Silver:
+  RESTORE TABLE Silver_Lakehouse.silver_training_enrolments
+  TO VERSION AS OF 3;   ← roll back to version 3</div>
+</div>
+
+<!-- TAB 3: WHAT LIVES WHERE -->
+<div id="workspaces" class="panel">
+  <div class="section-label">Each workspace has a distinct purpose — never mix them</div>
+  <div class="ws-grid">
+    <div class="ws-card ws-dev">
+      <div class="ws-title">UNIV-DEV</div>
+      <div class="ws-body">
+        <strong>Git branch:</strong> feature/*<br>
+        <strong>Data:</strong> Synthetic / sample (never real PII)<br>
+        <strong>Capacity:</strong> F2 (small — cheap)<br>
+        <strong>Who uses it:</strong> Data engineers only<br>
+        <strong>Purpose:</strong> Write, test, break things safely. Notebooks are experimental here.<br><br>
+        Contains: Bronze_LH_DEV, Silver_LH_DEV, Gold_LH_DEV (all with fake data)
+      </div>
+    </div>
+    <div class="ws-card ws-test">
+      <div class="ws-title">UNIV-TEST</div>
+      <div class="ws-body">
+        <strong>Git branch:</strong> develop<br>
+        <strong>Data:</strong> Anonymised copy of real data<br>
+        <strong>Capacity:</strong> F8 (medium)<br>
+        <strong>Who uses it:</strong> Engineers + analysts + UAT testers<br>
+        <strong>Purpose:</strong> Integration testing, UAT with university stakeholders, performance testing.<br><br>
+        Contains: Bronze_LH_TEST, Silver_LH_TEST, Gold_LH_TEST
+      </div>
+    </div>
+    <div class="ws-card ws-prod">
+      <div class="ws-title">UNIV-PROD</div>
+      <div class="ws-body">
+        <strong>Git branch:</strong> main<br>
+        <strong>Data:</strong> Live university data (real PII — RBAC enforced)<br>
+        <strong>Capacity:</strong> F64 (production grade)<br>
+        <strong>Who uses it:</strong> All roles (RBAC controls access per layer)<br>
+        <strong>Purpose:</strong> Live platform. Pipelines scheduled here. Power BI reports connect here.<br><br>
+        Contains: Bronze_LH, Silver_LH, Gold_LH, Gold_Warehouse
+      </div>
+    </div>
+    <div class="ws-card ws-gov">
+      <div class="ws-title">UNIV-GOVERNANCE</div>
+      <div class="ws-body">
+        <strong>Git branch:</strong> governance (separate)<br>
+        <strong>Data:</strong> Metadata only (no raw data)<br>
+        <strong>Capacity:</strong> F8<br>
+        <strong>Who uses it:</strong> Data stewards, compliance officers, auditors<br>
+        <strong>Purpose:</strong> Purview policies, sensitivity labels, lineage review, audit reports. Completely isolated from engineering work.<br><br>
+        Contains: Purview connection, audit log dashboards, policy definitions
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Key rule: data never crosses workspace boundaries directly</div>
+  <div class="card">
+    <div class="card-title">OneLake Shortcuts — how TEST reads PROD data safely</div>
+    <div class="card-body">You never copy production data into TEST manually. Instead, use an <strong>OneLake Shortcut</strong> — a pointer that lets TEST read a <em>read-only snapshot</em> of PROD Bronze tables without duplicating the data. The shortcut appears as a normal table in TEST but cannot be written to.<br><br>
+    In UNIV-TEST Lakehouse → New shortcut → OneLake → select UNIV-PROD/Bronze_Lakehouse/Tables/bronze_training_enrolments → Create.<br><br>
+    For anonymisation: run a one-time PySpark notebook that reads the shortcut, masks PII columns (e.g. replace email with fake@test.com), and writes to a local TEST Silver table.</div>
+  </div>
+</div>
+
+<!-- TAB 4: DOCUMENT STORAGE -->
+<div id="docs" class="panel">
+  <div class="section-label">Every project document has a specific home — nothing lives in email</div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="display:grid;grid-template-columns:200px 1fr 160px;gap:0">
+      <div class="doc-row" style="background:var(--color-background-secondary)">
+        <span class="doc-header">Document</span>
+        <span class="doc-header">What it contains</span>
+        <span class="doc-header">Where it lives</span>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">STTM (Source-to-Target Mapping)</div>
+        <div class="doc-desc">Every source column → target column mapping, transformation rules, data types, validation logic. One row per attribute across all entities.</div>
+        <div class="doc-where"><span class="pill pill-conf">Confluence</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">also backed up in Git /docs/</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">Business Questions & KPI definitions</div>
+        <div class="doc-desc">All agreed business questions, KPI formulas, target values, alert thresholds. The contract between business and data team.</div>
+        <div class="doc-where"><span class="pill pill-conf">Confluence</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">linked from JIRA stories</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">Data Profiling Reports</div>
+        <div class="doc-desc">Output of NB_00. Null rates, duplicate counts, value distributions, anomalies found in raw source files. Evidence base for STTM decisions.</div>
+        <div class="doc-where"><span class="pill pill-lake">Lakehouse</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">Files/profiling_reports/ in Bronze_LH_DEV</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">Architecture Decision Log</div>
+        <div class="doc-desc">Why we chose Option 1 (3 Lakehouses), why watermark CDC, why Direct Lake. Each decision has a date, options considered, and rationale.</div>
+        <div class="doc-where"><span class="pill pill-git">Git</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">/docs/architecture_decision_log.md</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">Runbook (operational guide)</div>
+        <div class="doc-desc">Daily checklist, troubleshooting guide, how to restart a failed pipeline, how to roll back. Written for whoever operates the platform day-to-day.</div>
+        <div class="doc-where"><span class="pill pill-conf">Confluence</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">also in Git /docs/runbook.md</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">DQ Log (live)</div>
+        <div class="doc-desc">Every DQ check result written by NB_07. Queryable as a Delta table. Feeds the Power BI DQ Monitor page.</div>
+        <div class="doc-where"><span class="pill pill-lake">Lakehouse</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">Silver_Lakehouse.dq_log</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">Weekly Status Report</div>
+        <div class="doc-desc">Friday update to PwC manager: completed, in progress, blockers. One page. Sent via Teams/email.</div>
+        <div class="doc-where"><span class="pill pill-share">SharePoint</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">PwC project folder</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">JIRA / Sprint board</div>
+        <div class="doc-desc">All work items, user stories, bugs, scope change requests. Every feature branch name references a JIRA ticket (e.g. feature/UNIV-42-silver-staff).</div>
+        <div class="doc-where"><span class="pill pill-conf">JIRA</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">linked to Azure DevOps PRs</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">Stakeholder meeting notes</div>
+        <div class="doc-desc">Discovery sessions with doctors, training managers, IT. Requirements captured, open questions, decisions made.</div>
+        <div class="doc-where"><span class="pill pill-conf">Confluence</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">per-meeting page, linked to sprint</span></div>
+      </div>
+      <div class="doc-row">
+        <div class="doc-name">Sensitivity label policy</div>
+        <div class="doc-desc">Which columns carry which label, who approved, GDPR legal basis. Signed off by Data Steward.</div>
+        <div class="doc-where"><span class="pill pill-lake">Purview</span><br><span style="font-size:11px;color:var(--color-text-tertiary)">UNIV-GOVERNANCE workspace</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tip-box" style="margin-top:12px">The STTM is the most important document on the project. Keep it in Confluence so it is version-controlled, searchable, and anyone (including the university client) can be given read access. Never keep the canonical STTM in someone's personal OneDrive or email inbox.</div>
+</div>
+
+<!-- TAB 5: GOVERNANCE WORKSPACE -->
+<div id="governance" class="panel">
+  <div class="section-label">UNIV-GOVERNANCE is completely separate from engineering — here is why</div>
+  <div class="card">
+    <div class="card-title">What UNIV-GOVERNANCE actually contains</div>
+    <div class="card-body">The Governance workspace is not where data lives. It is where <strong>policies, lineage, and audit evidence</strong> live. Separating it means an auditor or compliance officer can be given access to this workspace without ever being able to see Bronze raw data or Silver PII tables.</div>
+  </div>
+
+  <div class="section-label">Items inside UNIV-GOVERNANCE</div>
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <span class="step-title">Microsoft Purview connection</span>
+      The Purview account (univ-purview) is registered here. Purview automatically scans all four workspaces and catalogues every table, column, and pipeline. The scan schedule: Bronze daily, Silver daily, Gold weekly, streaming tables on-demand.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <span class="step-title">Sensitivity label dashboard (Power BI report)</span>
+      A report connected to Purview's API that shows: how many assets are labelled, which PII columns exist, which tables have no sensitivity label (governance gap). Updated automatically as Purview scans run.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <span class="step-title">Lineage viewer</span>
+      Purview's lineage graph, surfaced in this workspace. Shows the complete chain: Excel file → ADF pipeline → Bronze table → Silver notebook → Gold fact table → Power BI report. Any auditor can click on a column in a Power BI report and trace it back to the original Excel cell it came from.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <span class="step-title">GDPR audit log report</span>
+      A Power BI report over the Purview audit log showing: who accessed which table, when, from which application. This is what the university's Data Protection Officer will ask for if there is ever a GDPR query.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <span class="step-title">RBAC assignment documentation</span>
+      A Notebook (NB_10) that documents every role assignment across all workspaces as a Delta table — who has what access, when it was granted, by whom. Not the access control itself (that is managed in Fabric Admin), but the evidence that access was managed correctly.
+    </div>
+  </div>
+
+  <div class="success-box">During a GDPR audit, you need to demonstrate three things: (1) you know what PII data you hold and where — Purview catalogue answers this. (2) You control who can access it — RBAC + DDM answers this. (3) You can show the complete trail of how data moves — Purview lineage answers this. UNIV-GOVERNANCE is the single place a Data Protection Officer goes to find all three.</div>
+</div>
+
+<!-- TAB 6: DAILY GIT WORKFLOW -->
+<div id="daily" class="panel">
+  <div class="section-label">What a typical day looks like for a data engineer on this project</div>
+
+  <div class="step-row">
+    <div class="step-num" style="background:var(--color-background-success);color:var(--color-text-success)">AM</div>
+    <div class="step-content">
+      <span class="step-title">Morning — check last night's runs</span>
+      Open Fabric Monitor in UNIV-PROD → Activity runs → filter last 12 hours. All green? Check the DQ log query. Any WARN or FAIL? Investigate before touching any code today.
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <span class="step-title">Create a JIRA ticket for today's work</span>
+      Example: UNIV-47 — "Add academic_semester column to silver_training_enrolments". Every piece of work, even a small one, gets a ticket. This links your PR to a business requirement.
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <span class="step-title">Create a feature branch in Azure DevOps</span>
+      <div class="code-block">In Azure DevOps → Repos → Branches → New branch
+Name: feature/UNIV-47-silver-academic-semester
+From: develop  ← always branch from develop, never from main</div>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <span class="step-title">Switch UNIV-DEV workspace to your feature branch</span>
+      <div class="code-block">UNIV-DEV workspace → top bar → Git branch indicator
+→ Switch branch → feature/UNIV-47-silver-academic-semester
+→ Update (pulls the branch into your DEV workspace)</div>
+      Now your DEV workspace reflects your feature branch. Any notebook you edit here will be committed to that branch.
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <span class="step-title">Edit the notebook in UNIV-DEV</span>
+      Open NB_04_Silver_Transformation in DEV. Make the change. Run it against DEV data. DQ checks pass. The Fabric Git panel shows the notebook as "Modified".
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">5</div>
+    <div class="step-content">
+      <span class="step-title">Commit to your feature branch</span>
+      <div class="code-block">Fabric workspace → Source control panel (top right)
+→ Changes: NB_04_Silver_Transformation.ipynb (modified)
+→ Commit message: "UNIV-47: add academic_semester derived column"
+→ Commit and push</div>
+      The notebook is now in Azure DevOps under your feature branch.
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">6</div>
+    <div class="step-content">
+      <span class="step-title">Raise a Pull Request to develop</span>
+      Azure DevOps → Repos → Pull Requests → New → feature/UNIV-47 → develop. Add the JIRA ticket number in the description. CI pipeline runs unit tests automatically. Assign reviewer.
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">7</div>
+    <div class="step-content">
+      <span class="step-title">After PR approval — TEST picks it up automatically</span>
+      Once merged to develop, UNIV-TEST shows the updated notebook immediately. Run it in TEST. If it passes, create the develop → main PR for PROD promotion.
+    </div>
+  </div>
+
+  <div class="info-box" style="margin-top:8px">The full cycle for a small change (one notebook, one column) is: 30 min to write and test in DEV → PR raised → 24h for review → 30 min TEST validation → PR to PROD → live. For urgent hotfixes, the manager can approve both PRs on the same day.</div>
+
+  <div class="section-label">Config files — how DEV, TEST, PROD know which Lakehouse to use</div>
+  <div class="code-block">config_dev.json:
+{
+  "bronze_lakehouse" : "Bronze_LH_DEV",
+  "silver_lakehouse" : "Silver_LH_DEV",
+  "gold_lakehouse"   : "Gold_LH_DEV",
+  "api_base_url"     : "https://lms-uat.university.ie/api/v2",
+  "secret_scope"     : "univ-secrets-dev"
+}
+
+config_prod.json:
+{
+  "bronze_lakehouse" : "Bronze_Lakehouse",
+  "silver_lakehouse" : "Silver_Lakehouse",
+  "gold_lakehouse"   : "Gold_Lakehouse",
+  "api_base_url"     : "https://lms.university.ie/api/v2",
+  "secret_scope"     : "univ-secrets-prod"
+}
+
+In every notebook — first cell reads the config:
+import json
+env = spark.conf.get("pipeline.env", "dev")
+cfg = json.load(open(f"config/config_{env}.json"))
+BRONZE = cfg["bronze_lakehouse"]   # use this everywhere instead of hardcoding</div>
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>

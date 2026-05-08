@@ -1,0 +1,530 @@
+
+<h2 class="sr-only">Complete day-one toolkit for PwC contract start covering weekly status report template, 6-month project timeline, bronze layer data verification approach, and pre-start checklist.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:1rem 0 1.25rem}
+.tab{padding:6px 16px;border-radius:20px;border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:8px}
+.card-body{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 8px}
+.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-info);line-height:1.6;margin:10px 0}
+.warn-box{background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin:10px 0}
+.success-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-success);line-height:1.6;margin:10px 0}
+.template-box{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px 16px;font-size:13px;color:var(--color-text-primary);line-height:1.9;margin:10px 0;font-family:var(--font-sans);white-space:pre-wrap}
+.copy-btn{font-size:12px;padding:5px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.copy-btn:hover{background:var(--color-background-secondary)}
+.copy-btn.ok{background:var(--color-background-success);color:var(--color-text-success);border-color:var(--color-border-success)}
+.tl-row{display:grid;grid-template-columns:110px 1fr;gap:0;margin-bottom:0}
+.tl-left{padding:10px 14px 10px 0;border-right:2px solid var(--color-border-tertiary);text-align:right;position:relative}
+.tl-left::after{content:'';width:10px;height:10px;border-radius:50%;background:var(--color-border-secondary);position:absolute;right:-6px;top:14px}
+.tl-right{padding:10px 0 10px 16px}
+.tl-date{font-size:11px;font-weight:500;color:var(--color-text-tertiary)}
+.tl-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:3px}
+.tl-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.tl-pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
+.p-bronze{background:#FAEEDA;color:#633806}
+.p-silver{background:#E6F1FB;color:#185FA5}
+.p-gold{background:#EAF3DE;color:#27500A}
+.p-gov{background:#EDE9FE;color:#3C3489}
+.p-pbi{background:#E1F5EE;color:#0F6E56}
+.p-mgr{background:#FCEBEB;color:#791F1F}
+.p-all{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.do-dont{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.do-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:12px 14px}
+.dont-box{background:var(--color-background-danger);border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);padding:12px 14px}
+.box-title{font-size:12px;font-weight:500;margin-bottom:8px}
+.do-box .box-title{color:var(--color-text-success)}
+.dont-box .box-title{color:var(--color-text-danger)}
+li.di{font-size:12px;color:var(--color-text-secondary);line-height:1.8;list-style:none;padding-left:14px;position:relative}
+li.di::before{position:absolute;left:0;font-size:11px}
+.do-box li.di::before{content:"✓";color:var(--color-text-success)}
+.dont-box li.di::before{content:"✗";color:var(--color-text-danger)}
+.step-row{display:grid;grid-template-columns:28px 1fr;gap:10px;margin-bottom:12px;align-items:start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--color-background-info);color:var(--color-text-info);font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-content{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.step-title{font-weight:500;color:var(--color-text-primary);display:block;margin-bottom:2px}
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.check-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);cursor:pointer;transition:all .15s;border:0.5px solid transparent}
+.check-item.checked{background:var(--color-background-success);border-color:var(--color-border-success)}
+.check-icon{width:16px;height:16px;border-radius:3px;border:0.5px solid var(--color-border-secondary);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;margin-top:1px}
+.check-item.checked .check-icon{background:var(--color-background-success);border-color:var(--color-border-success);color:var(--color-text-success)}
+.check-text{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.check-item.checked .check-text{color:var(--color-text-success)}
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.metric{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center}
+.metric-n{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.metric-l{font-size:11px;color:var(--color-text-secondary);margin-top:3px}
+</style>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('status',this)">Weekly status report</div>
+  <div class="tab" onclick="show('timeline',this)">6-month timeline</div>
+  <div class="tab" onclick="show('bronze',this)">Bronze verification</div>
+  <div class="tab" onclick="show('prestart',this)">Pre-start checklist</div>
+  <div class="tab" onclick="show('missed',this)">Things you haven't asked yet</div>
+</div>
+
+<!-- ═══ TAB 1: STATUS REPORT ═══ -->
+<div id="status" class="panel active">
+  <div class="section-label">Why send it and when</div>
+  <div class="card">
+    <div class="card-title">Send every Friday by 4:30pm — no exceptions</div>
+    <div class="card-body">The weekly status report is the single most powerful reputation-building tool available to a contractor. It shows control, transparency, and professionalism. Most contractors never send one unprompted. Doing it consistently from week one creates a permanent impression that carries through the entire engagement. Keep it short — 3 sections, under one page. The manager should be able to read it in 90 seconds.</div>
+  </div>
+
+  <div class="section-label">Week 1 — first ever status report (special format)</div>
+  <div id="t1" class="template-box">Subject: University Data Platform — Week 1 Status | Shajeeb S
+
+Hi [Manager name],
+
+Here is my week 1 summary for the university data platform engagement.
+
+COMPLETED THIS WEEK
+─────────────────────────────────────────
+• Onboarded to PwC systems, tools, and project context
+• Attended kickoff and stakeholder introduction meetings
+• Reviewed all available documentation and existing source files
+• Completed initial source inventory — identified 5 Excel sources across 3 departments and 1 REST API (LMS system)
+• Completed data profiling on 2 of the 5 Excel sources — findings document attached
+
+KEY FINDINGS FROM PROFILING
+─────────────────────────────────────────
+• Training enrolments: 3 columns with >15% null rate — flagged for STTM discussion
+• Doctor schedules: date format inconsistency detected (mix of dd/MM/yyyy and MM/dd/yyyy)
+• LMS REST API: access credentials requested from IT — awaiting response
+• No existing data governance documentation found — Purview setup required from scratch
+
+NEXT WEEK PLAN
+─────────────────────────────────────────
+• Complete profiling on remaining 3 Excel sources
+• Draft STTM v0.1 for training enrolments entity
+• Set up UNIV-DEV workspace and Git repository structure
+• First Bronze pipeline (training enrolments Excel) in DEV
+
+BLOCKERS / DECISIONS NEEDED
+─────────────────────────────────────────
+• LMS API credentials — need IT contact introduced by [date]
+• SharePoint folder structure — confirm where department teams will drop Excel files
+
+Happy to discuss any of the above. Have a great weekend.
+
+Shajeeb S
+Senior Data Analyst | PwC (Contract)</div>
+  <button class="copy-btn" onclick="copyT('t1',this)"><i class="ti ti-copy" aria-hidden="true"></i> Copy week 1 template</button>
+
+  <div class="section-label" style="margin-top:1.5rem">Weeks 2–24 — standard weekly format</div>
+  <div id="t2" class="template-box">Subject: University Data Platform — Week [N] Status | Shajeeb S
+
+Hi [Manager name],
+
+Week [N] summary below.
+
+COMPLETED THIS WEEK
+─────────────────────────────────────────
+• [Specific deliverable with measurable outcome — e.g. "Bronze Excel pipeline live in DEV — 4,832 rows loaded, 0 errors"]
+• [Second deliverable]
+• [Third deliverable — keep to 3–5 bullets max]
+
+IN PROGRESS
+─────────────────────────────────────────
+• [Item currently being worked — include % complete estimate if useful]
+• [Second in-progress item]
+
+NEXT WEEK PLAN
+─────────────────────────────────────────
+• [Specific planned deliverable]
+• [Second planned item]
+
+BLOCKERS / DECISIONS NEEDED FROM YOU
+─────────────────────────────────────────
+• [Specific ask — name the person or decision needed]
+  → If none: "No blockers this week — all items on track"
+
+METRICS THIS WEEK
+─────────────────────────────────────────
+• Pipeline runs: [X] successful / [Y] failed
+• DQ checks: [X] passing / [Y] warnings / [Z] failures
+• Rows processed: [X] Bronze / [Y] Silver / [Z] Gold
+• Quality score: [X]%
+
+[Optional: one sentence on anything notable — good or bad]
+
+Shajeeb S
+Senior Data Analyst | PwC (Contract)</div>
+  <button class="copy-btn" onclick="copyT('t2',this)"><i class="ti ti-copy" aria-hidden="true"></i> Copy standard weekly template</button>
+
+  <div class="info-box" style="margin-top:12px">The metrics section becomes available once pipelines are running (from about week 4 onwards). Before that, replace it with "Setup progress: DEV ✓ / TEST — / PROD —" so the manager always has a visual indicator of where things stand.</div>
+
+  <div class="section-label" style="margin-top:1.5rem">Rules for writing good status updates</div>
+  <div class="do-dont">
+    <div class="do-box">
+      <div class="box-title">Always do</div>
+      <ul>
+        <li class="di">Use specific numbers — "4,832 rows" not "data loaded"</li>
+        <li class="di">Name the blocker owner — "awaiting IT contact from [name]"</li>
+        <li class="di">State next week's plan before being asked</li>
+        <li class="di">Mention risks even if you plan to resolve them yourself</li>
+        <li class="di">Keep it under one page — managers skim</li>
+        <li class="di">Send at the same time every week — 4:30pm Friday</li>
+        <li class="di">Attach any profiling reports or draft documents as evidence</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <div class="box-title">Never do</div>
+      <ul>
+        <li class="di">Use vague language — "worked on Bronze layer" tells nothing</li>
+        <li class="di">Skip a week because "nothing happened" — always send</li>
+        <li class="di">Bury a problem at the bottom — blockers go in their own section</li>
+        <li class="di">Write more than 5 bullets per section</li>
+        <li class="di">Wait until Monday morning to send the Friday report</li>
+        <li class="di">Send without a subject line that includes the week number</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 2: TIMELINE ═══ -->
+<div id="timeline" class="panel">
+  <div class="section-label">6-month delivery plan — share this with your manager on day 3</div>
+  <div class="info-box">Present this as a living document — not a fixed contract. Frame it to the manager as "my proposed plan — I'd like your input before we share with the client." This positions you as organised and proactive without over-committing on day one.</div>
+
+  <div style="margin-top:16px">
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#185FA5"><span class="tl-date" style="color:#185FA5">Week 1–2</span><div style="width:10px;height:10px;border-radius:50%;background:#185FA5;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Discovery & environment setup</div>
+        <div class="tl-body">Stakeholder interviews, source inventory, data profiling all 5 Excel sources + REST API investigation. Git repo + 4 workspaces created. STTM v0.1 drafted. Control tables created.</div>
+        <div class="tl-pills"><span class="pill p-all">Discovery</span><span class="pill p-bronze">Profiling</span><span class="pill p-mgr">Manager review</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#185FA5"><span class="tl-date" style="color:#185FA5">Week 3–5</span><div style="width:10px;height:10px;border-radius:50%;background:#185FA5;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Bronze layer — all sources ingesting in DEV</div>
+        <div class="tl-body">NB_02 Excel ingestion live for all 4 sources. NB_03 REST API ingestion live with watermark CDC. Control/watermark tables seeded. Pipeline run logging active. Historical backfill complete.</div>
+        <div class="tl-pills"><span class="pill p-bronze">Bronze</span><span class="pill p-all">DEV</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#633806"><span class="tl-date" style="color:#633806">Week 6–7</span><div style="width:10px;height:10px;border-radius:50%;background:#633806;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Bronze → TEST + business sign-off on source data</div>
+        <div class="tl-body">Bronze pipelines promoted to TEST. Source data reconciliation session with university IT — they verify row counts match their source systems. STTM v1.0 signed off by data steward.</div>
+        <div class="tl-pills"><span class="pill p-bronze">Bronze</span><span class="pill p-all">TEST</span><span class="pill p-mgr">Stakeholder sign-off</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#633806"><span class="tl-date" style="color:#633806">Week 8–10</span><div style="width:10px;height:10px;border-radius:50%;background:#633806;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Silver layer — all entities transformed & DQ framework live</div>
+        <div class="tl-body">NB_04 Silver transformations for all 6 entities. SCD Type 2 active. NB_05 streaming Bronze→Silver live. NB_07 DQ checks running — minimum 90% quality score required before Gold build begins.</div>
+        <div class="tl-pills"><span class="pill p-silver">Silver</span><span class="pill p-all">DEV→TEST</span><span class="pill p-all">Streaming</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#27500A"><span class="tl-date" style="color:#27500A">Week 11–13</span><div style="width:10px;height:10px;border-radius:50%;background:#27500A;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Gold layer + Power BI prototype — first stakeholder demo</div>
+        <div class="tl-body">Star schema built. dim_date, dim_student, dim_staff, dim_course, fact tables live. Power BI prototype with Training Dashboard and Clinical Hours report shown to university stakeholders. Feedback captured in writing.</div>
+        <div class="tl-pills"><span class="pill p-gold">Gold</span><span class="pill p-pbi">Power BI prototype</span><span class="pill p-mgr">Demo</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#27500A"><span class="tl-date" style="color:#27500A">Week 14–15</span><div style="width:10px;height:10px;border-radius:50%;background:#27500A;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">UAT — stakeholders test reports against known data</div>
+        <div class="tl-body">University training manager, medical director, and IT review TEST environment. Each verifies their report numbers against their known source data (e.g. "we know there are 342 active enrolments in October"). UAT sign-off document produced.</div>
+        <div class="tl-pills"><span class="pill p-gold">Gold</span><span class="pill p-pbi">Power BI</span><span class="pill p-mgr">UAT sign-off</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#3C3489"><span class="tl-date" style="color:#3C3489">Week 16–17</span><div style="width:10px;height:10px;border-radius:50%;background:#3C3489;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Governance — Purview, RBAC, sensitivity labels, DDM</div>
+        <div class="tl-body">Purview scanning all workspaces. Sensitivity labels applied to all PII columns. Dynamic Data Masking on Gold Warehouse. RBAC groups assigned. GDPR audit evidence report generated in UNIV-GOVERNANCE.</div>
+        <div class="tl-pills"><span class="pill p-gov">Governance</span><span class="pill p-all">Purview</span><span class="pill p-all">RBAC</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#0F6E56"><span class="tl-date" style="color:#0F6E56">Week 18–20</span><div style="width:10px;height:10px;border-radius:50%;background:#0F6E56;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Production deployment + monitoring live</div>
+        <div class="tl-body">Full platform promoted to UNIV-PROD via Fabric Deployment Pipeline. All scheduled triggers activated. NB_08 monitoring running every 30 min. Reflex alerts configured for Teams. Smoke test pipeline passing. All 5 Power BI reports live.</div>
+        <div class="tl-pills"><span class="pill p-all">PROD</span><span class="pill p-all">Monitoring</span><span class="pill p-pbi">Power BI live</span></div>
+      </div>
+    </div>
+    <div class="tl-row">
+      <div class="tl-left" style="border-color:#0F6E56"><span class="tl-date" style="color:#0F6E56">Week 21–24</span><div style="width:10px;height:10px;border-radius:50%;background:#0F6E56;position:absolute;right:-6px;top:14px"></div></div>
+      <div class="tl-right">
+        <div class="tl-title">Hypercare, runbook, handover & extension planning</div>
+        <div class="tl-body">Two weeks of hypercare — daily monitoring, rapid fix of any production issues. Runbook completed. University IT staff trained on platform operation. Architecture documentation finalised. Extension conversation with PwC manager about Phase 2 scope.</div>
+        <div class="tl-pills"><span class="pill p-all">Handover</span><span class="pill p-mgr">Extension discussion</span><span class="pill p-all">Runbook</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top:12px">Buffer weeks: weeks 7, 13, and 17 are intentionally lighter. Do not fill them with extra scope — they exist to absorb delays from stakeholder sign-offs, access requests, and API issues that always take longer than expected in a university environment.</div>
+</div>
+
+<!-- ═══ TAB 3: BRONZE VERIFICATION ═══ -->
+<div id="bronze" class="panel">
+  <div class="section-label">The core rule — who accesses what layer</div>
+  <div class="card">
+    <div class="card-title">Business users never see Bronze directly — and here is exactly why</div>
+    <div class="card-body">Bronze is your raw, unmodified source data. It contains everything exactly as it came in — wrong date formats, status codes like "C" instead of "Completed", nulls, duplicates, and all. Showing this to a doctor or training manager would confuse them and undermine trust in the platform. The Bronze layer is for engineers only. Business verification happens at Silver and Gold.</div>
+  </div>
+
+  <div class="section-label">The three levels of data verification</div>
+
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <span class="step-title">Bronze reconciliation — engineer-to-IT only</span>
+      After the first Bronze load, you run a reconciliation session with the university's IT contact or the person who provided the Excel files. You share a simple count report — "we loaded 4,832 rows from training_enrolments_oct.xlsx — does that match the row count in your source?" This is a technical handshake between engineers, not a business meeting.
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <span class="step-title">Silver verification — business users verify cleansed data</span>
+      This is where business stakeholders first get involved. You give the training manager access to a simple Silver verification report in Power BI — a plain table showing the cleansed data with readable column names ("Completed" instead of "C", proper dates). They check: do the student names look right? Are the course names correct? Are any records obviously wrong? This is the UAT for transformation logic.
+    </div>
+  </div>
+
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <span class="step-title">Gold UAT — business users verify numbers match reality</span>
+      The most important verification. The training manager is asked: "From your records, how many students completed the Mandatory Fire Safety course in October?" They give you a number — say 87. You show them the Gold dashboard — it says 87. That match is your UAT sign-off. Do this for 5–10 specific known numbers across different domains before going live.
+    </div>
+  </div>
+
+  <div class="section-label">What to actually build for verification at each stage</div>
+
+  <div class="card">
+    <div class="card-title">Bronze — build a reconciliation report (engineers only, never shared with business)</div>
+    <div class="card-body">A simple PySpark notebook that produces a row-count summary table — one row per source file loaded, with batch_id, file name, row count, and load timestamp. Output this as a Delta table and optionally a CSV. You share this with the university IT contact to confirm nothing was missed during ingestion. This is not a Power BI dashboard — it is a technical handover document.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Silver — build a simple data verification view (shared with business users in TEST only)</div>
+    <div class="card-body">A basic Power BI report page — one table per entity — showing the cleansed Silver data in plain business language. No aggregations, no KPIs. Just the raw rows with readable column names and proper formatting. Give the training manager read access to this in TEST only. Ask them to flag any rows that look wrong. Document all feedback in a verification log before proceeding to Gold.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Gold — formal UAT sign-off document</div>
+    <div class="card-body">Prepare a one-page UAT sign-off sheet with 10 spot-check numbers — specific counts or totals the business can verify against their own records. Example: "Total active enrolments in Semester 1 2024/25 = 1,204 — verified by Training Manager [name] on [date]." Get this signed (or emailed confirmation) before PROD deployment. This protects both you and PwC if anyone later questions the numbers.</div>
+  </div>
+
+  <div class="do-dont">
+    <div class="do-box">
+      <div class="box-title">What business users should see</div>
+      <ul>
+        <li class="di">Silver verification table in TEST (plain rows, no aggregation)</li>
+        <li class="di">Gold Power BI dashboards in TEST during UAT</li>
+        <li class="di">Gold Power BI dashboards in PROD after sign-off</li>
+        <li class="di">DQ monitor page (summary only — pass/fail counts)</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <div class="box-title">What business users should never see</div>
+      <ul>
+        <li class="di">Bronze Delta tables — raw unprocessed data</li>
+        <li class="di">Bronze files in the Lakehouse Files/ zone</li>
+        <li class="di">The DQ log detail table (too technical)</li>
+        <li class="di">Pipeline run logs or error messages</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="success-box">The bronze layer never needs a business-facing dashboard. The reconciliation report you build is for your own confidence and for the IT handshake — not for doctors or training managers. Keep that boundary clean from day one.</div>
+</div>
+
+<!-- ═══ TAB 4: PRE-START CHECKLIST ═══ -->
+<div id="prestart" class="panel">
+  <div class="section-label">Complete before your first day — tick each off</div>
+  <div id="checks"></div>
+  <div class="metric-row" style="margin-top:16px">
+    <div class="metric"><div class="metric-n" id="ck-done">0</div><div class="metric-l">Completed</div></div>
+    <div class="metric"><div class="metric-n" id="ck-left">0</div><div class="metric-l">Remaining</div></div>
+    <div class="metric"><div class="metric-n" id="ck-pct">0%</div><div class="metric-l">Ready</div></div>
+    <div class="metric"><div class="metric-n" id="ck-days" style="color:var(--color-text-info)">—</div><div class="metric-l">Days to go</div></div>
+  </div>
+
+  <div class="section-label">Questions to ask PwC before day one</div>
+  <div class="card">
+    <div class="card-body">
+      Email or message your PwC manager this week — not on day one — and ask:<br><br>
+      <b style="color:var(--color-text-primary)">1.</b> What tools will I be using day-to-day — Teams, JIRA, Confluence, Azure DevOps? Can I get credentials set up before I start?<br><br>
+      <b style="color:var(--color-text-primary)">2.</b> Is there an existing Azure DevOps organisation and project I should join, or do I need to create one?<br><br>
+      <b style="color:var(--color-text-primary)">3.</b> Has a Fabric capacity been provisioned for this engagement, or is that part of my first week's tasks?<br><br>
+      <b style="color:var(--color-text-primary)">4.</b> Who is my main point of contact at the university — IT lead, data owner, or project sponsor?<br><br>
+      <b style="color:var(--color-text-primary)">5.</b> Are there any existing documents — previous data audit, IT architecture diagrams, or SharePoint structure — I should read before day one?<br><br>
+      <b style="color:var(--color-text-primary)">6.</b> What is the preferred status reporting format — email, Teams message, or shared document?
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 5: THINGS NOT ASKED ═══ -->
+<div id="missed" class="panel">
+  <div class="section-label">Important things you haven't asked yet — but need to know</div>
+
+  <div class="card">
+    <div class="card-title">1. What happens when the university changes an Excel file mid-project?</div>
+    <div class="card-body">This will happen. A department will rename a column, add a new tab, or change a date format. You need a formal source change request process from day one — a simple rule: "Any change to source Excel file structure must be notified to the data team at least 3 business days in advance." Put this in writing in the project governance document. Without it, a silent column rename will break your Silver transformation in production at 6am on a Monday.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">2. Who owns the data at the university — and who can approve changes to it?</div>
+    <div class="card-body">You need a named Data Owner and a named Data Steward at the university before you write a single pipeline. The Data Owner (typically a department head) approves what data enters the platform. The Data Steward (typically an IT or compliance person) approves sensitivity labels and access control decisions. Without these two roles filled, GDPR compliance is impossible and every access decision becomes a debate.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">3. What is the data retention policy?</div>
+    <div class="card-body">The university will have a data retention policy — how long student records, medical records, and training records must be kept (often 7 years for medical, varies for academic). This affects your Bronze retention setting, your Silver VACUUM policy, and whether you can ever truly delete a record or must only soft-delete it. Ask the university's Data Protection Officer for the retention schedule in week one. Design it in later is expensive.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">4. What happens to the platform when your contract ends?</div>
+    <div class="card-body">This is uncomfortable to think about before you start, but critical. Who at the university or PwC will operate the platform after you leave? If nobody has the skills to run it, either you train someone during the engagement (the right answer), or the platform dies within months of your departure. Identify the person who will own it operationally and build them into your documentation and training plan from week one. This also makes the extension conversation easier — "I want to stay to ensure proper handover."</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">5. How do you handle student or medical data under GDPR for a university in Ireland?</div>
+    <div class="card-body">Ireland's Data Protection Commission is strict. University data containing student records falls under GDPR Article 6 (lawful basis for processing). Medical/clinical data falls under Article 9 (special category data) and requires explicit additional safeguards. The university must have a lawful basis documented for every data processing activity you build. Ask for their Data Processing Register in week one — if it does not exist, flag it to the PwC manager immediately as a governance risk.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">6. What if the REST API specs change during the project?</div>
+    <div class="card-body">Third-party systems release updates. The LMS vendor might change their API response structure, deprecate an endpoint, or require a new authentication method during your 6-month engagement. Your Bronze REST API notebook must be written to detect unexpected schema changes and fail loudly rather than silently swallowing the change. Also get the vendor's API changelog URL and subscribe to notifications on day one — knowing about a breaking change 2 weeks in advance versus 2 hours changes everything.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">7. Are there existing Power BI reports or Excel-based reports you are replacing?</div>
+    <div class="card-body">Almost certainly yes. The training manager is probably sending a manually compiled Excel report to someone every week. The medical director probably has a spreadsheet someone maintains. Before you build any dashboard, identify every existing report and understand who depends on it. Your Gold layer must produce the same numbers those reports show — or the stakeholders will not trust your platform. Run a "numbers match" exercise in UAT where you compare your dashboard output against the last manually produced report.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">8. What is your escalation path if you are blocked for more than 2 days?</div>
+    <div class="card-body">Define this with your PwC manager in week one: if you are waiting for an API credential, a SharePoint access request, or a stakeholder decision for more than 2 business days, what do you do? Who do you escalate to? On a 6-month contract, 5 days of blocked time is nearly 1% of your entire engagement. Have an agreed escalation process so you are never sitting idle while waiting for someone to action a request.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">9. What does the third-party system actually contain — and can it be fully replaced long term?</div>
+    <div class="card-body">You know there is a third-party LMS system with a REST API, but you do not yet know: what data it holds that is NOT in Excel, whether the university owns that data, whether the vendor allows bulk export, and whether the university plans to renew that contract. The answers affect your architecture. If the LMS contract ends in 18 months, building a deep integration with it may be wasted effort. Ask about the vendor contract status in your discovery sessions.</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">10. What is the network and firewall situation for API calls from Fabric?</div>
+    <div class="card-body">Fabric Notebooks make outbound HTTP calls to REST APIs. University networks often have restrictive firewall rules. The LMS API at lms.university.ie may only be accessible from within the university network — which Fabric (a Microsoft cloud service) is not part of. This is a day-one infrastructure question for the university IT team. If the API is behind a firewall, you may need a VNet integration or an Azure API Management gateway. Find out before you design the ingestion pipeline.</div>
+  </div>
+</div>
+
+<script>
+const CHECKS = [
+  {g:'Tools & access', items:[
+    'Set up Microsoft Teams (PwC tenant)',
+    'Set up Azure DevOps account',
+    'Install VS Code with Python extension',
+    'Install Azure Data Studio',
+    'Create a Fabric trial workspace for personal practice',
+    'Request JIRA / Confluence access from PwC manager',
+  ]},
+  {g:'Knowledge prep', items:[
+    'Re-read the full implementation guide document',
+    'Re-read the PySpark script library document',
+    'Practise explaining the 3-Lakehouse architecture aloud in 2 minutes',
+    'Practise explaining watermark CDC without notes',
+    'Practise explaining Direct Lake vs DirectQuery in plain English',
+    'Write 10 discovery questions for the university stakeholders',
+  ]},
+  {g:'Pre-start questions sent to manager', items:[
+    'Ask about tools and credential setup before day one',
+    'Ask if Fabric capacity is provisioned or needs to be created',
+    'Ask for main university contact name and role',
+    'Ask for any existing project documents to read in advance',
+    'Confirm preferred status report format (email vs Teams)',
+  ]},
+  {g:'Day one preparation', items:[
+    'Prepare a printed or digital one-page project overview to reference',
+    'Write your Week 1 status report template (fill in Friday)',
+    'Set a recurring Friday 4:00pm calendar reminder — "Write status report"',
+    'Set up a private notes document to log decisions, blockers, and meeting notes',
+  ]}
+];
+
+const ckState = {};
+let total = 0;
+
+function buildChecks(){
+  const el = document.getElementById('checks');
+  CHECKS.forEach(group => {
+    const gl = document.createElement('div');
+    gl.style.cssText = 'font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-tertiary);margin:1rem 0 6px';
+    gl.textContent = group.g;
+    el.appendChild(gl);
+    const grid = document.createElement('div');
+    grid.className = 'check-grid';
+    group.items.forEach((item, i) => {
+      const key = group.g + i;
+      ckState[key] = false;
+      total++;
+      const div = document.createElement('div');
+      div.className = 'check-item';
+      div.id = 'ck-'+key.replace(/\s/g,'_');
+      div.innerHTML = '<div class="check-icon">✓</div><div class="check-text">'+item+'</div>';
+      div.onclick = () => toggleCk(key, div);
+      grid.appendChild(div);
+    });
+    el.appendChild(grid);
+  });
+  updateCkStats();
+}
+
+function toggleCk(key, el){
+  ckState[key] = !ckState[key];
+  el.classList.toggle('done', ckState[key]);
+  el.classList.toggle('checked', ckState[key]);
+  updateCkStats();
+}
+
+function updateCkStats(){
+  const doneCount = Object.values(ckState).filter(Boolean).length;
+  const leftCount = total - doneCount;
+  document.getElementById('ck-done').textContent = doneCount;
+  document.getElementById('ck-left').textContent = leftCount;
+  document.getElementById('ck-pct').textContent = Math.round(doneCount/total*100)+'%';
+  const today = new Date();
+  const start = new Date('2025-05-11');
+  const diff = Math.max(0, Math.ceil((start - today) / (1000*60*60*24)));
+  document.getElementById('ck-days').textContent = diff > 0 ? diff : 'Started';
+}
+
+function copyT(id, btn){
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('ok');
+    setTimeout(() => {
+      btn.innerHTML = '<i class="ti ti-copy" aria-hidden="true"></i> Copy template';
+      btn.classList.remove('ok');
+    }, 2000);
+  });
+}
+
+function show(id, el){
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+window.show = show;
+window.copyT = copyT;
+buildChecks();
+</script>

@@ -1,0 +1,323 @@
+
+<h2 class="sr-only">62 copy-ready questions to ask Claude about the Microsoft Fabric university data platform, organised across 5 phases with progress tracking.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.top{padding:1rem 0 0.75rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.top-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.stats{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--color-text-secondary)}
+.stats b{color:var(--color-text-primary)}
+.reset-btn{font-size:12px;padding:4px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer}
+.ctx-box{background:var(--color-background-secondary);border-left:3px solid #185FA5;border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;padding:10px 14px;font-size:12px;color:var(--color-text-secondary);line-height:1.7;margin-bottom:10px}
+.ctx-copy{font-size:12px;padding:5px 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;margin-bottom:1.25rem;display:inline-block}
+.phase-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+.ptab{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid transparent;transition:all .15s}
+.pane{display:none}
+.pane.active{display:block}
+.grp-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-tertiary);margin:1rem 0 6px}
+.qrow{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);margin-bottom:5px;transition:border-color .15s}
+.qrow:hover{border-color:var(--color-border-secondary)}
+.qrow.done{background:var(--color-background-success);border-color:var(--color-border-success)}
+.qnum{font-size:11px;color:var(--color-text-tertiary);min-width:22px;padding-top:2px;flex-shrink:0}
+.qrow.done .qnum{color:var(--color-text-success)}
+.qtxt{font-size:13px;color:var(--color-text-primary);line-height:1.55;flex:1;font-style:italic;cursor:pointer}
+.qrow.done .qtxt{color:var(--color-text-success)}
+.cbtn{font-size:11px;padding:3px 9px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.cbtn.ok{background:var(--color-background-success);color:var(--color-text-success);border-color:var(--color-border-success)}
+.chk{width:16px;height:16px;border-radius:3px;border:0.5px solid var(--color-border-secondary);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;margin-top:2px}
+.qrow.done .chk{background:var(--color-background-success);border-color:var(--color-border-success);color:var(--color-text-success)}
+.phase-prog{font-size:11px;margin-left:6px;opacity:.7}
+</style>
+
+<div class="top">
+  <div class="top-title">Self-study framework — 62 questions</div>
+  <div class="stats">Done: <b id="sc">0</b> / <b>62</b> &nbsp;|&nbsp; <b id="pc">0%</b> &nbsp;<button class="reset-btn" onclick="resetAll()">Reset</button></div>
+</div>
+
+<div class="ctx-box">
+  <b>Paste this before every question:</b> "Context: I'm building a medallion architecture in Microsoft Fabric for a university. Sources: messy Excel files (doctors, surgeons, training team) + one third-party REST API. No structured storage yet. Architecture: Option 1 — 3 separate Lakehouses (Bronze/Silver/Gold) in UNIV-PROD. Git: Azure DevOps, branch-per-environment (feature/* → develop → main). Requirement: near-real-time streaming Bronze→Silver using Delta Change Data Feed."
+</div>
+<button class="ctx-copy" id="ctx-btn" onclick="copyCtx()">Copy context block ↗</button>
+
+<div class="phase-tabs" id="ptabs"></div>
+<div id="panes"></div>
+
+<script>
+const CTX = 'Context: I\'m building a medallion architecture in Microsoft Fabric for a university. Sources: messy Excel files (doctors, surgeons, training team) + one third-party REST API. No structured storage yet. Architecture: Option 1 — 3 separate Lakehouses (Bronze/Silver/Gold) in UNIV-PROD. Git: Azure DevOps, branch-per-environment (feature/* → develop → main). Requirement: near-real-time streaming Bronze→Silver using Delta Change Data Feed.\n\n';
+
+const PHASES = [
+  {
+    id:'p1', label:'Phase 1', title:'Environment & Git setup',
+    color:'#185FA5', bg:'#E6F1FB',
+    groups:[
+      { label:'Workspace & Lakehouse setup', qs:[
+        'Teach me exactly how to enable Microsoft Fabric in a Microsoft 365 tenant — what admin settings to change, what licence is needed, and how to verify it is working.',
+        'Walk me through creating the four workspaces UNIV-DEV, UNIV-TEST, UNIV-PROD, and UNIV-GOVERNANCE step by step — what capacity to assign each and why.',
+        'What is the difference between Fabric capacity tiers F2, F8, and F64 — what does each cost roughly and which is appropriate for DEV vs TEST vs PROD?',
+        'Teach me how to create three Lakehouses inside UNIV-PROD — Bronze_Lakehouse, Silver_Lakehouse, Gold_Lakehouse — and explain why we use three separate Lakehouses instead of one.',
+        'How do I create a Fabric Warehouse called Gold_Warehouse inside UNIV-PROD, and when would I use the Warehouse instead of the Gold Lakehouse?',
+      ]},
+      { label:'Git & branch strategy', qs:[
+        'Teach me step by step how to connect a Fabric workspace to an Azure DevOps repository, including how to configure UNIV-DEV to track feature branches, UNIV-TEST to track develop, and UNIV-PROD to track main.',
+        'Show me the exact Azure DevOps folder structure I should use to store notebooks, pipeline definitions, config files, and documentation for this university project.',
+        'What is saved to Git when I commit a Fabric notebook — what file format, what metadata — and what is NOT saved to Git and stays only in OneLake?',
+        'Explain the feature branch PR flow in plain terms: when do I create a branch, how do I raise a PR, and what exactly happens to UNIV-TEST the moment a PR is merged to develop?',
+        'How do I roll back a bad deployment in Fabric — show me both the Git revert approach and the Delta RESTORE TABLE TO VERSION approach and when to use each.',
+      ]},
+      { label:'Config & secrets', qs:[
+        'Show me the config.json pattern so the same notebook automatically reads from Bronze_LH_DEV in DEV and Bronze_Lakehouse in PROD — include the exact PySpark first-cell code to load the config.',
+        'How do I store API keys and connection strings securely in Fabric — walk me through Azure Key Vault, creating a secret scope, and calling dbutils.secrets.get() inside a PySpark notebook.',
+      ]}
+    ]
+  },
+  {
+    id:'p2', label:'Phase 2', title:'Bronze ingestion layer',
+    color:'#633806', bg:'#FAEEDA',
+    groups:[
+      { label:'Excel ingestion', qs:[
+        'Teach me how to ingest Excel files from SharePoint into a Fabric Lakehouse using Azure Data Factory — what linked service to create, what the Copy Data activity looks like, and where files land in the Lakehouse Files/ zone.',
+        'Show me the complete PySpark code to read an Excel file from Files/ using the crealytics spark-excel library, append the four audit columns (_ingested_at, _source_file, _source_system, _batch_id), and write as a Delta table to Bronze with mergeSchema.',
+        'What does inferSchema:false mean when reading Excel in PySpark, and why is it critical to keep everything as STRING in Bronze? What production problems does it prevent?',
+        'My university Excel files have inconsistent column headers — different people rename columns between monthly exports. How do I detect this automatically and alert rather than silently fail?',
+      ]},
+      { label:'REST API ingestion', qs:[
+        'Before I build any REST API pipeline, how do I profile and test the unknown third-party LMS API — what specific checks do I run to understand its response structure, pagination pattern, rate limits, and reliability?',
+        'Teach me the watermark CDC pattern for REST API ingestion — show the complete PySpark code including reading last_run_ts from control_watermark, passing it as a query parameter, handling pagination, and updating the watermark only after a successful write.',
+        'My REST API uses OAuth2 client credentials. Show me the full PySpark code to get a token, handle token expiry during a long pagination loop, and retry on 429 rate-limit responses with exponential backoff.',
+        'What is idempotency in a data pipeline and how do I make my Bronze REST API notebook idempotent so re-running after a failure never creates duplicate rows?',
+        'How do I flatten nested JSON from a REST API response in PySpark — show the code to detect StructType fields and expand them into flat columns before writing to Bronze.',
+      ]},
+      { label:'Control tables & logging', qs:[
+        'Show me the exact SQL DDL and PySpark seed code to create and populate control_watermark, control_pipeline_log, and control_silver_watermark tables.',
+        'How do I write a reusable pipeline run logging helper function in PySpark that every notebook calls at start and end, writing status, row counts, batch ID, and any error message to control_pipeline_log?',
+      ]}
+    ]
+  },
+  {
+    id:'p3', label:'Phase 3', title:'Silver & Gold transformation',
+    color:'#27500A', bg:'#EAF3DE',
+    groups:[
+      { label:'Silver transformation patterns', qs:[
+        'Explain SCD Type 2 in plain terms using a university staff member changing department as the example — what the valid_from, valid_to, is_current, and row_hash columns do and why we need them.',
+        'Show me the complete PySpark Delta MERGE that implements SCD Type 2 — the two-step pattern of expiring changed rows first then inserting new ones, with the row_hash comparison logic.',
+        'I need to parse UK date formats (dd/MM/yyyy) from Excel in PySpark. Show the transformation code including handling nulls, invalid date strings, and detecting dd/MM/yyyy vs MM/dd/yyyy without being told.',
+        'Show me how to build a derived academic_year column in PySpark that produces "2024/2025" for Sept–Dec dates and "2023/2024" for Jan–Aug — explain the when/otherwise logic step by step.',
+        'What is an MD5 row hash and how do I generate one in PySpark across multiple columns? Show the concat_ws + md5 pattern and explain why it is better than comparing every column individually in a MERGE.',
+      ]},
+      { label:'Gold dimensional model', qs:[
+        'Teach me star schema design from scratch using the university training data — what makes something a fact vs a dimension table, what a surrogate key is, and how to choose the grain of a fact table.',
+        'Show me the PySpark code to generate a complete date spine dim_date from 2010 to 2035 using spark.sql sequence and explode — with date_key, year, quarter, month, month_name, day_name, is_weekend, academic_year, and academic_semester.',
+        'How do I add a surrogate key to a Gold dimension using monotonically_increasing_id() and what are its limitations? When should I use a different approach?',
+        'Show me the Gold fact table build notebook — joining Silver entities, resolving surrogate keys via left joins to dims, and writing the fact partitioned by academic_year. Explain why partitioning on academic_year improves query performance.',
+        'How do I build a pre-aggregated vw_training_summary view in Gold that Power BI uses instead of the raw fact table? Show the PySpark SQL including completion_rate_pct and dropout_rate_pct calculations.',
+      ]},
+      { label:'Schema & Delta management', qs:[
+        'What is Delta Lake schema evolution and how does mergeSchema work? Give me a real example where a new column appears in next month\'s Excel file — what happens at Bronze, Silver, and Gold and what alerts should I raise.',
+        'How do I use DESCRIBE HISTORY on a Delta table to see what changed, and how does RESTORE TABLE TO VERSION work as a rollback if Silver transformation writes bad data?',
+      ]}
+    ]
+  },
+  {
+    id:'p4', label:'Phase 4', title:'Streaming, DQ & monitoring',
+    color:'#3C3489', bg:'#EDE9FE',
+    groups:[
+      { label:'Streaming Bronze to Silver', qs:[
+        'Teach me Delta Change Data Feed from the beginning — how to enable it with ALTER TABLE SET TBLPROPERTIES, what the _change_type column values mean (insert, update_preimage, update_postimage, delete), and why we only process insert and update_postimage in Silver.',
+        'Show me the complete Structured Streaming notebook using spark.readStream with readChangeFeed=true and a foreachBatch function that runs a Delta MERGE into Silver — explain checkpoint, trigger(processingTime), and why awaitTermination(timeout=900) is used.',
+        'What is the difference between Structured Streaming and Fabric Eventstream/Eventhouse — when would I use each for this university project and what would make me switch to Eventstream in phase 2?',
+        'If my streaming notebook fails halfway through a micro-batch, what happens to the checkpoint? How does exactly-once processing work in foreachBatch and what do I do if the checkpoint gets corrupted?',
+      ]},
+      { label:'Data quality framework', qs:[
+        'Teach me how to build a reusable dq_check() function in PySpark that takes a DataFrame, a filter condition, entity name, and severity level — writing a structured result row to a dq_log Delta table on every run.',
+        'What are the five categories of DQ checks I should run for university data? Show me one example rule per category — null completeness, range validity, referential integrity, date logic, and volume anomaly — with the actual PySpark filter condition.',
+        'How do I implement volume anomaly detection — show the PySpark code comparing today\'s row count against the 7-day rolling average and raising an alert when deviation exceeds 40%.',
+        'How do I make a DQ FAIL status halt the Gold pipeline from running? Show the Python exception raise pattern and explain how Fabric Pipeline activity dependencies use it as a gate.',
+        'What is a referential integrity check in a star schema? Show the PySpark left_anti join that finds student_ids in Silver not in dim_student, and explain why this should be WARNING not CRITICAL in the first few weeks.',
+      ]},
+      { label:'Monitoring & alerting', qs:[
+        'How do I build a data freshness SLA check in PySpark — show the code reading max(_ingested_at) from each Bronze table, calculating hours_old, comparing against a threshold, and writing an alert row if breached.',
+        'Teach me how to set up a Fabric Data Activator (Reflex) alert step by step in the UI — firing a Teams message when the DQ log table contains a FAIL status written in the last 30 minutes.',
+        'How do I build a pipeline success rate monitor that queries control_pipeline_log for the last 24 hours and raises a CRITICAL alert if any pipeline has more than zero failed runs?',
+        'What should the Power BI Data Quality Monitor page show and what pre-aggregated Gold table do I build to support it efficiently with Direct Lake? Show the vw_dq_monitor SQL.',
+      ]}
+    ]
+  },
+  {
+    id:'p5', label:'Phase 5', title:'Power BI, governance & deployment',
+    color:'#0F6E56', bg:'#E1F5EE',
+    groups:[
+      { label:'Power BI & Direct Lake', qs:[
+        'Explain Direct Lake mode in Power BI — how it differs from Import and DirectQuery, why it is faster, what fallback to DirectQuery means in practice, and how to connect it to a Gold Lakehouse step by step.',
+        'How do I implement Row-Level Security in a Power BI semantic model over the Gold Lakehouse — show the DAX role expressions giving a Medical Director access only to medical data and a Training Manager only to training data.',
+        'What are the five Power BI report pages I should build for the university, what audience does each serve, and what are the two or three most important visuals on each page?',
+        'Show me the mandatory training compliance SQL that finds active students who never completed a mandatory course OR whose last completion was over 365 days ago — with the compliance_status label Never Completed / Overdue / Due Soon / Compliant.',
+        'Show me the clinical hours vs target SQL that calculates each doctor\'s actual hours vs contracted hours, pct_of_contracted, and assigns On Target / At Risk / Below Target status labels.',
+      ]},
+      { label:'Governance & Purview', qs:[
+        'How do I connect Microsoft Purview to a Fabric workspace — what steps in the Azure Portal, what steps in the Fabric Admin Portal, and how do I verify Purview is automatically scanning and cataloguing my Lakehouse tables?',
+        'Teach me how to apply sensitivity labels to Delta tables and columns using ALTER TABLE SET TBLPROPERTIES and ALTER COLUMN COMMENT in PySpark — and how Purview picks these up in the lineage graph.',
+        'What is Dynamic Data Masking in Fabric Warehouse — show me how to apply it to the email column in dim_student and how to grant UNMASK only to the data engineering group with exact SQL.',
+        'What does end-to-end data lineage look like in Purview for this project — describe the complete chain from a SharePoint Excel file to a Power BI visual, and what I must do to ensure every step is visible.',
+        'A university GDPR audit asks: what PII do we hold, who can access it, and how does it flow through the system. Which specific Purview feature answers each question and where in UNIV-GOVERNANCE do I find the evidence?',
+      ]},
+      { label:'Production deployment & maintenance', qs:[
+        'Walk me through the complete DEV → TEST → PROD deployment of a new notebook using Fabric Deployment Pipelines — what I click, what the approval gate looks like, and how to verify the PROD workspace updated correctly.',
+        'How do I create a smoke test pipeline PL_SmokeTest that runs after every PROD deployment and validates row counts in all Bronze and Silver tables — failing the deployment if any table is empty or below a threshold?',
+        'What is Delta VACUUM and OPTIMIZE, when do I run each, what Z-ORDER columns do I choose for the university tables, and what is the 7-day retention rule I must not override?',
+        'Show me the complete weekly Delta maintenance notebook that runs VACUUM 168h, OPTIMIZE with Z-ORDER, and ANALYZE TABLE COMPUTE STATISTICS for all 15 tables across Bronze, Silver, and Gold.',
+        'How do I write a README.md for the Azure DevOps repo so a new engineer with no prior knowledge of this project can set up the full environment from scratch in one day — what sections must it contain?',
+      ]}
+    ]
+  }
+];
+
+const done = {};
+let activePhase = 'p1';
+
+function buildUI(){
+  const tabsEl = document.getElementById('ptabs');
+  const panesEl = document.getElementById('panes');
+  let globalIdx = 0;
+
+  PHASES.forEach(ph => {
+    const tab = document.createElement('div');
+    tab.className = 'ptab' + (ph.id==='p1'?' active':'');
+    tab.id = 'tab-'+ph.id;
+    tab.style.background = ph.id==='p1' ? ph.bg : 'var(--color-background-secondary)';
+    tab.style.color = ph.id==='p1' ? ph.color : 'var(--color-text-secondary)';
+    tab.style.borderColor = ph.id==='p1' ? ph.color : 'transparent';
+    tab.innerHTML = ph.label + ' <span class="phase-prog" id="pp-'+ph.id+'"></span>';
+    tab.onclick = () => switchPhase(ph.id);
+    tabsEl.appendChild(tab);
+
+    const pane = document.createElement('div');
+    pane.className = 'pane' + (ph.id==='p1'?' active':'');
+    pane.id = 'pane-'+ph.id;
+
+    const phTitle = document.createElement('div');
+    phTitle.style.cssText = 'font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:1rem;padding:8px 12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)';
+    phTitle.textContent = ph.title;
+    pane.appendChild(phTitle);
+
+    ph.groups.forEach(grp => {
+      const gl = document.createElement('div');
+      gl.className = 'grp-label';
+      gl.textContent = grp.label;
+      pane.appendChild(gl);
+
+      grp.qs.forEach(q => {
+        const idx = globalIdx++;
+        const qrow = document.createElement('div');
+        qrow.className = 'qrow';
+        qrow.id = 'qr-'+idx;
+
+        const num = document.createElement('div');
+        num.className = 'qnum';
+        num.textContent = (idx+1);
+
+        const chk = document.createElement('div');
+        chk.className = 'chk';
+        chk.innerHTML = '✓';
+        chk.onclick = () => toggleDone(idx, ph.id);
+
+        const txt = document.createElement('div');
+        txt.className = 'qtxt';
+        txt.textContent = q;
+        txt.onclick = () => copyQ(idx, q);
+
+        const btn = document.createElement('button');
+        btn.className = 'cbtn';
+        btn.id = 'cb-'+idx;
+        btn.textContent = 'Copy ↗';
+        btn.onclick = (e) => { e.stopPropagation(); copyQ(idx, q); };
+
+        qrow.appendChild(num);
+        qrow.appendChild(chk);
+        qrow.appendChild(txt);
+        qrow.appendChild(btn);
+        pane.appendChild(qrow);
+      });
+    });
+    panesEl.appendChild(pane);
+  });
+  updateAllProgress();
+}
+
+function switchPhase(id){
+  activePhase = id;
+  PHASES.forEach(ph => {
+    const tab = document.getElementById('tab-'+ph.id);
+    const pane = document.getElementById('pane-'+ph.id);
+    if(ph.id===id){
+      tab.classList.add('active');
+      tab.style.background = ph.bg;
+      tab.style.color = ph.color;
+      tab.style.borderColor = ph.color;
+      pane.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+      tab.style.background = 'var(--color-background-secondary)';
+      tab.style.color = 'var(--color-text-secondary)';
+      tab.style.borderColor = 'transparent';
+      pane.classList.remove('active');
+    }
+  });
+}
+
+function copyQ(idx, text){
+  navigator.clipboard.writeText(CTX + text).then(() => {
+    const btn = document.getElementById('cb-'+idx);
+    btn.textContent = 'Copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent='Copy ↗'; btn.classList.remove('ok'); }, 1800);
+  });
+}
+
+function copyCtx(){
+  navigator.clipboard.writeText(CTX.trim()).then(() => {
+    const btn = document.getElementById('ctx-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent='Copy context block ↗'; }, 1800);
+  });
+}
+
+function toggleDone(idx, phaseId){
+  done[idx] = !done[idx];
+  document.getElementById('qr-'+idx).classList.toggle('done', done[idx]);
+  updateAllProgress();
+}
+
+function updateAllProgress(){
+  let total=0, doneCount=0;
+  PHASES.forEach(ph => {
+    let phTotal=0, phDone=0;
+    ph.groups.forEach(g => { phTotal += g.qs.length; });
+    let startIdx = 0;
+    PHASES.forEach(p2 => {
+      if(p2.id===ph.id) return;
+      p2.groups.forEach(g => { startIdx += g.qs.length; });
+    });
+    for(let i=startIdx; i<startIdx+phTotal; i++){
+      if(done[i]) phDone++;
+    }
+    document.getElementById('pp-'+ph.id).textContent = phDone+'/'+phTotal;
+    total += phTotal;
+    doneCount += phDone;
+  });
+  document.getElementById('sc').textContent = doneCount;
+  document.getElementById('pc').textContent = Math.round(doneCount/total*100)+'%';
+}
+
+function resetAll(){
+  Object.keys(done).forEach(k => {
+    done[k] = false;
+    const el = document.getElementById('qr-'+k);
+    if(el) el.classList.remove('done');
+  });
+  updateAllProgress();
+}
+
+window.copyCtx = copyCtx;
+window.resetAll = resetAll;
+buildUI();
+</script>

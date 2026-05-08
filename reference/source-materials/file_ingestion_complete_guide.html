@@ -1,0 +1,456 @@
+
+<h2 class="sr-only">Complete guide covering how raw Excel files flow into the Bronze Lakehouse, how duplicate files are detected and handled, four options for how the client delivers files, and the PySpark code for each scenario.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:1rem 0 1.25rem}
+.tab{padding:6px 16px;border-radius:20px;border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px}
+.card-body{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 8px}
+.code{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 14px;font-family:var(--font-mono);font-size:12px;color:var(--color-text-primary);line-height:1.9;margin:8px 0;white-space:pre-wrap;overflow-x:auto}
+.code .cm{color:var(--color-text-tertiary)}
+.code .kw{color:var(--color-text-info);font-weight:500}
+.code .st{color:var(--color-text-success)}
+.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-info);line-height:1.6;margin:10px 0}
+.warn-box{background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin:10px 0}
+.success-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-success);line-height:1.6;margin:10px 0}
+.step-row{display:grid;grid-template-columns:28px 1fr;gap:10px;margin-bottom:12px;align-items:start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--color-background-info);color:var(--color-text-info);font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-content{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.step-title{font-weight:500;color:var(--color-text-primary);display:block;margin-bottom:2px}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.opt-card{border-radius:var(--border-radius-md);padding:10px 12px;border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary)}
+.opt-card.best{border:1.5px solid var(--color-border-success)}
+.opt-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.opt-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.badge-best{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--color-background-success);color:var(--color-text-success);font-weight:500}
+.badge-ok{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-secondary);font-weight:500}
+.badge-avoid{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--color-background-danger);color:var(--color-text-danger);font-weight:500}
+.folder-tree{font-family:var(--font-mono);font-size:12px;color:var(--color-text-secondary);line-height:2;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 16px;margin:8px 0}
+.fd{color:var(--color-text-info);font-weight:500}
+.fc{color:var(--color-text-primary)}
+.fm{color:var(--color-text-tertiary)}
+</style>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('flow',this)">Files folder structure</div>
+  <div class="tab" onclick="show('dup',this)">Duplicate handling</div>
+  <div class="tab" onclick="show('delivery',this)">File delivery options</div>
+  <div class="tab" onclick="show('code',this)">Complete PySpark code</div>
+</div>
+
+<!-- TAB 1: FOLDER STRUCTURE -->
+<div id="flow" class="panel active">
+  <div class="section-label">The problem with a flat /Files folder</div>
+  <div class="card">
+    <div class="card-title">Never read directly from one flat /Files folder</div>
+    <div class="card-body">If all Excel files land in one folder with no structure, you have no way to know: which files have already been processed, which are new, whether the same file was uploaded twice with a different name, or which department it belongs to. You need a structured landing zone with clear zones for incoming, processed, and rejected files.</div>
+  </div>
+
+  <div class="section-label">The correct folder structure inside Bronze_Lakehouse/Files/</div>
+  <div class="folder-tree">
+<span class="fd">Files/</span>
+│
+<span class="fd">├── landing/</span>                          <span class="fm">← client drops files HERE only</span>
+│   <span class="fd">├── training/</span>
+│   │   <span class="fc">├── training_enrolments_2025_05.xlsx</span>   <span class="fm">← new file</span>
+│   │   <span class="fc">└── training_enrolments_2025_04.xlsx</span>   <span class="fm">← last month (not yet moved)</span>
+│   <span class="fd">├── medical/</span>
+│   │   <span class="fc">└── doctor_schedules_2025_W20.xlsx</span>
+│   <span class="fd">├── hr/</span>
+│   │   <span class="fc">└── staff_roster_2025_05.xlsx</span>
+│   └── <span class="fd">facilities/</span>
+│       <span class="fc">└── room_bookings_2025_05.xlsx</span>
+│
+<span class="fd">├── processed/</span>                        <span class="fm">← pipeline moves files here after success</span>
+│   <span class="fd">├── training/</span>
+│   │   <span class="fc">└── training_enrolments_2025_04.xlsx</span>  <span class="fm">← already loaded</span>
+│   <span class="fd">├── medical/</span>
+│   └── <span class="fd">hr/</span>
+│
+<span class="fd">├── rejected/</span>                         <span class="fm">← pipeline moves files here on failure</span>
+│   <span class="fc">└── training_enrolments_CORRUPT.xlsx</span>  <span class="fm">← bad file, with error log</span>
+│
+<span class="fd">├── archive/</span>                          <span class="fm">← processed files older than 90 days</span>
+│
+└── <span class="fd">file_registry/</span>                    <span class="fm">← Delta table tracking every file ever seen</span>
+    <span class="fc">└── (Delta table: file_ingestion_registry)</span>
+  </div>
+
+  <div class="section-label">The file_ingestion_registry Delta table — the key to everything</div>
+  <div class="card">
+    <div class="card-title">This table is the memory of your ingestion layer</div>
+    <div class="card-body">Every file the pipeline has ever seen is recorded here with its MD5 hash, size, status, and batch ID. Before processing any file, the pipeline checks this table. If the file's hash already exists with status SUCCESS, it is a duplicate — skip it. This is the foundation of idempotent, duplicate-safe ingestion.</div>
+  </div>
+  <div class="code"><span class="cm">-- Create once in NB_01_Create_Control_Tables</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> Bronze_Lakehouse.file_ingestion_registry (
+    file_id          STRING,       <span class="cm">-- UUID generated on first sight</span>
+    file_name        STRING,       <span class="cm">-- original filename</span>
+    file_path        STRING,       <span class="cm">-- full path in Files/ zone</span>
+    file_size_bytes  LONG,         <span class="cm">-- size at time of detection</span>
+    file_hash_md5    STRING,       <span class="cm">-- MD5 of file content — the duplicate key</span>
+    source_system    STRING,       <span class="cm">-- 'excel_training', 'excel_medical' etc</span>
+    detected_at      TIMESTAMP,    <span class="cm">-- when pipeline first saw this file</span>
+    processed_at     TIMESTAMP,    <span class="cm">-- when pipeline finished loading it</span>
+    row_count        LONG,         <span class="cm">-- rows loaded to Bronze</span>
+    status           STRING,       <span class="cm">-- PENDING / SUCCESS / FAILED / DUPLICATE / SKIPPED</span>
+    batch_id         STRING,       <span class="cm">-- links to control_pipeline_log</span>
+    error_message    STRING        <span class="cm">-- populated only on FAILED status</span>
+) USING DELTA
+COMMENT <span class="st">'Registry of every file seen by ingestion pipelines'</span>;</div>
+</div>
+
+<!-- TAB 2: DUPLICATE HANDLING -->
+<div id="dup" class="panel">
+  <div class="section-label">The four types of duplicate you will encounter</div>
+
+  <div class="card">
+    <div class="card-title">Type 1 — Exact same file uploaded twice (same name, same content)</div>
+    <div class="card-body">Most common. Training manager uploads January file, realises they uploaded it already, uploads again. The MD5 hash of both files will be identical. Detection: compute hash on arrival, check registry. Action: mark as DUPLICATE, move to rejected/, send alert. Do NOT load.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Type 2 — Same content, different filename</div>
+    <div class="card-body">Training manager renames the file before uploading. "training_jan_v1.xlsx" vs "training_january_FINAL.xlsx" — same rows inside. Detection: MD5 hash match in registry even though filename is different. Action: mark as DUPLICATE, alert with message "Content already loaded under different filename [original name]". This is the sneaky one that catches people out if they only check filenames.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Type 3 — Updated file with same name (corrected data)</div>
+    <div class="card-body">Training manager uploads "training_jan.xlsx", realises row 47 had a typo, fixes it, uploads "training_jan.xlsx" again. Same name but different content — different MD5 hash. This is NOT a duplicate — it is a correction. Detection: filename exists in registry with SUCCESS status, but hash is different. Action: load the new file, flag in the registry as a CORRECTION, and trigger Silver re-processing for affected rows. This needs a decision from the manager — do you overwrite or keep both versions? Default: keep both, apply the latest.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Type 4 — Partial overlap (new file contains rows already in Bronze)</div>
+    <div class="card-body">Monthly file contains all current month rows plus some carry-over from last month. The file itself is new, but some rows inside it are duplicates of rows already loaded. Detection: row-level deduplication in the Silver transformation using the row_hash. Bronze always gets the full file — Silver handles row-level deduplication via Delta MERGE on business keys. Never try to deduplicate at Bronze level — preserve everything raw.</div>
+  </div>
+
+  <div class="section-label">The duplicate detection decision tree</div>
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <span class="step-title">Compute MD5 hash of the file on arrival</span>
+      Before reading a single row, compute the file's MD5 hash using Python's hashlib. This is fast — a 5MB Excel file hashes in milliseconds.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <span class="step-title">Check hash against file_ingestion_registry</span>
+      Query: does this hash exist with status = 'SUCCESS'? If yes → DUPLICATE, skip. If hash exists with status = 'FAILED' → retry allowed, proceed. If hash is new → proceed to load.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <span class="step-title">Check filename against registry (different hash)</span>
+      If filename was seen before but hash is different → CORRECTION. Log it, alert the manager, load the new version, re-trigger Silver for that source.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <span class="step-title">Move file after processing</span>
+      Success → move to Files/processed/[source]/. Duplicate → move to Files/rejected/[source]/ with a .log file explaining why. Failed → move to Files/rejected/[source]/ with the error message in the .log file.
+    </div>
+  </div>
+
+  <div class="warn-box">Never delete files from the landing zone from inside the pipeline. Always move them. Deleting is irreversible. Moving to processed/ or rejected/ keeps a full audit trail and lets you manually re-process a rejected file after investigation.</div>
+</div>
+
+<!-- TAB 3: DELIVERY OPTIONS -->
+<div id="delivery" class="panel">
+  <div class="section-label">Four ways files can reach your landing zone — pick the right one for each department</div>
+
+  <div class="opt-grid">
+    <div class="opt-card best">
+      <div class="opt-title"><span class="badge-best">Recommended</span> SharePoint upload</div>
+      <div class="opt-body">Departments upload Excel files to a named SharePoint folder. ADF copies them automatically to Files/landing/ on a schedule (every hour or nightly). Client never touches Fabric directly. IT can control who uploads per folder. Audit trail built in via SharePoint version history.</div>
+    </div>
+    <div class="opt-card best">
+      <div class="opt-title"><span class="badge-best">Recommended</span> Power Automate flow</div>
+      <div class="opt-body">A Power Automate flow triggers when a file is added to a specific SharePoint folder and copies it to the Fabric Lakehouse Files/landing/ zone immediately. Near-real-time delivery without scheduling. Good for medical team who update doctor schedules weekly.</div>
+    </div>
+    <div class="opt-card">
+      <div class="opt-title"><span class="badge-ok">Acceptable</span> Email attachment trigger</div>
+      <div class="opt-body">Power Automate watches a shared mailbox. When an email with an Excel attachment arrives from a known sender, it extracts the attachment to Files/landing/. Works well for departments who already send monthly reports by email. No behaviour change needed from the client.</div>
+    </div>
+    <div class="opt-card">
+      <div class="opt-title"><span class="badge-avoid">Avoid</span> Direct Fabric access</div>
+      <div class="opt-body">Giving business users (doctors, training managers) direct access to upload to Files/ in the Fabric Lakehouse. They might upload to the wrong folder, overwrite existing files, or upload incompatible formats. Keep business users out of Fabric entirely — they interact only via SharePoint or email.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Recommended architecture — SharePoint as the client-facing interface</div>
+  <div class="step-row">
+    <div class="step-num">1</div>
+    <div class="step-content">
+      <span class="step-title">Client uploads to SharePoint folder (familiar, no training needed)</span>
+      Create one SharePoint folder per department: /DataUploads/Training/, /DataUploads/Medical/, /DataUploads/HR/. Training manager already knows SharePoint. No new tools to learn. Set folder permissions so each department can only see their own folder.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">2</div>
+    <div class="step-content">
+      <span class="step-title">Power Automate copies to Fabric Files/landing/ immediately</span>
+      Flow trigger: "When a file is created or modified in SharePoint folder /DataUploads/Training/" → Action: Copy file to Fabric Lakehouse Files/landing/training/ using the Fabric connector. This happens within seconds of the upload — no waiting for a nightly pipeline.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">3</div>
+    <div class="step-content">
+      <span class="step-title">ADF pipeline polls landing/ and triggers ingestion</span>
+      ADF pipeline PL_Bronze_Excel_Ingest runs on schedule (hourly or nightly). It scans Files/landing/ for new files, runs duplicate detection, loads to Bronze, moves processed files. Client sees nothing of this — they only care that their SharePoint upload was acknowledged.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num">4</div>
+    <div class="step-content">
+      <span class="step-title">Automated confirmation email back to the uploader</span>
+      After a successful Bronze load, Power Automate sends a confirmation email: "Your file training_enrolments_may.xlsx was successfully processed — 1,247 rows loaded on 11 May 2025 at 09:14." If it failed: "Your file could not be processed — the date column contains an unrecognised format. Please contact data-team@university.ie." This closes the loop for the client without requiring them to log into anything.
+    </div>
+  </div>
+
+  <div class="section-label">File naming convention — agree this with the client before go-live</div>
+  <div class="card">
+    <div class="card-body">
+      Agree a mandatory file naming convention in writing and enforce it in the pipeline. If a file does not match the pattern, reject it immediately with a clear error message — do not try to guess what it is.<br><br>
+      Pattern: <code style="font-family:var(--font-mono);font-size:12px;background:var(--color-background-secondary);padding:2px 6px;border-radius:4px">[source]_[YYYY]_[MM].xlsx</code><br><br>
+      Examples: <code style="font-family:var(--font-mono);font-size:12px">training_enrolments_2025_05.xlsx</code>, <code style="font-family:var(--font-mono);font-size:12px">doctor_schedules_2025_W20.xlsx</code><br><br>
+      This gives you: the source system from the name, the period the data covers, a natural sort order in the folder, and a way to detect a file uploaded for the wrong period.
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: PYSPARK CODE -->
+<div id="code" class="panel">
+  <div class="section-label">Complete duplicate-safe ingestion notebook</div>
+
+<div class="code"><span class="cm"># NB_02_Bronze_Excel_Ingest_v2.ipynb</span>
+<span class="cm"># Handles: duplicate detection, file registry, move after load,</span>
+<span class="cm"># naming convention enforcement, correction detection</span>
+
+<span class="kw">import</span> hashlib, uuid, shutil, re
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> current_timestamp, lit, input_file_name
+<span class="kw">from</span> delta.tables <span class="kw">import</span> DeltaTable
+
+<span class="cm"># ── FILE NAMING PATTERN ──────────────────────────────────────────</span>
+<span class="cm"># Enforced: [source]_[YYYY]_[MM].xlsx or [source]_[YYYY]_W[WW].xlsx</span>
+FILE_PATTERN = re.compile(
+    r<span class="st">'^(training_enrolments|doctor_schedules|staff_roster|room_bookings)'</span>
+    r<span class="st">'_\d{4}_(0[1-9]|1[0-2]|W\d{2})\.xlsx$'</span>
+)
+
+<span class="cm"># ── COMPUTE MD5 HASH OF A FILE ───────────────────────────────────</span>
+<span class="kw">def</span> md5_of_file(path):
+    <span class="cm"># path is the ABFSS path in OneLake — read via mssparkutils</span>
+    content = mssparkutils.fs.head(path, 10 * 1024 * 1024)  <span class="cm"># read up to 10MB</span>
+    <span class="kw">return</span> hashlib.md5(content.encode(<span class="st">'utf-8'</span>) <span class="kw">if</span> <span class="kw">isinstance</span>(content, str)
+                       <span class="kw">else</span> content).hexdigest()
+
+<span class="cm"># ── CHECK REGISTRY FOR DUPLICATE ─────────────────────────────────</span>
+<span class="kw">def</span> check_registry(file_name, file_hash):
+    <span class="cm">"""
+    Returns: ('NEW', None) | ('DUPLICATE', existing_row)
+           | ('CORRECTION', existing_row) | ('RETRY', existing_row)
+    """</span>
+    reg = spark.sql(f<span class="st">"""
+        SELECT * FROM Bronze_Lakehouse.file_ingestion_registry
+        WHERE file_hash_md5 = '{file_hash}'
+          AND status = 'SUCCESS'
+        LIMIT 1
+    """</span>)
+    <span class="kw">if</span> reg.count() > 0:
+        <span class="kw">return</span> <span class="st">'DUPLICATE'</span>, reg.first()
+
+    name_match = spark.sql(f<span class="st">"""
+        SELECT * FROM Bronze_Lakehouse.file_ingestion_registry
+        WHERE file_name  = '{file_name}'
+          AND status     = 'SUCCESS'
+        LIMIT 1
+    """</span>)
+    <span class="kw">if</span> name_match.count() > 0:
+        <span class="kw">return</span> <span class="st">'CORRECTION'</span>, name_match.first()
+
+    failed = spark.sql(f<span class="st">"""
+        SELECT * FROM Bronze_Lakehouse.file_ingestion_registry
+        WHERE file_hash_md5 = '{file_hash}'
+          AND status = 'FAILED'
+        LIMIT 1
+    """</span>)
+    <span class="kw">if</span> failed.count() > 0:
+        <span class="kw">return</span> <span class="st">'RETRY'</span>, failed.first()
+
+    <span class="kw">return</span> <span class="st">'NEW'</span>, None
+
+<span class="cm"># ── REGISTER FILE IN REGISTRY ─────────────────────────────────────</span>
+<span class="kw">def</span> register_file(file_name, file_path, file_size,
+                  file_hash, source, status,
+                  batch_id, row_count=0, error=None):
+    file_id = str(uuid.uuid4())
+    now     = datetime.utcnow()
+    row = [(file_id, file_name, file_path, file_size,
+            file_hash, source, now,
+            now <span class="kw">if</span> status == <span class="st">'SUCCESS'</span> <span class="kw">else</span> None,
+            row_count, status, batch_id,
+            str(error) <span class="kw">if</span> error <span class="kw">else</span> None)]
+    spark.createDataFrame(row,
+        <span class="st">'file_id STRING, file_name STRING, file_path STRING,'</span>
+        <span class="st">' file_size_bytes LONG, file_hash_md5 STRING,'</span>
+        <span class="st">' source_system STRING, detected_at TIMESTAMP,'</span>
+        <span class="st">' processed_at TIMESTAMP, row_count LONG,'</span>
+        <span class="st">' status STRING, batch_id STRING, error_message STRING'</span>
+    ).write.format(<span class="st">'delta'</span>).mode(<span class="st">'append'</span>) \
+     .saveAsTable(<span class="st">'Bronze_Lakehouse.file_ingestion_registry'</span>)
+
+<span class="cm"># ── MOVE FILE AFTER PROCESSING ─────────────────────────────────────</span>
+<span class="kw">def</span> move_file(src_path, status):
+    <span class="cm"># status: 'processed' | 'rejected' | 'duplicate'</span>
+    file_name  = src_path.split(<span class="st">'/'</span>)[-1]
+    source_dir = src_path.split(<span class="st">'/'</span>)[-2]
+    dest_base  = f<span class="st">'Files/{status}/{source_dir}/'</span>
+    dest_path  = f<span class="st">'{dest_base}{file_name}'</span>
+    mssparkutils.fs.mkdirs(dest_base)
+    mssparkutils.fs.mv(src_path, dest_path)
+    print(f<span class="st">'  Moved: {file_name} → {status}/'</span>)
+
+<span class="cm"># ── ENFORCE NAMING CONVENTION ─────────────────────────────────────</span>
+<span class="kw">def</span> validate_filename(file_name):
+    <span class="kw">if not</span> FILE_PATTERN.match(file_name):
+        <span class="kw">raise</span> ValueError(
+            f<span class="st">'Filename "{file_name}" does not match naming convention. '</span>
+            f<span class="st">'Expected: [source]_YYYY_MM.xlsx — e.g. training_enrolments_2025_05.xlsx'</span>
+        )
+
+<span class="cm"># ── MAIN INGESTION LOOP ───────────────────────────────────────────</span>
+SOURCES = {
+    <span class="st">'training'</span>  : <span class="st">'Files/landing/training/'</span>,
+    <span class="st">'medical'</span>   : <span class="st">'Files/landing/medical/'</span>,
+    <span class="st">'hr'</span>        : <span class="st">'Files/landing/hr/'</span>,
+    <span class="st">'facilities'</span>: <span class="st">'Files/landing/facilities/'</span>,
+}
+
+TARGET_TABLES = {
+    <span class="st">'training'</span>  : <span class="st">'Bronze_Lakehouse.bronze_training_enrolments'</span>,
+    <span class="st">'medical'</span>   : <span class="st">'Bronze_Lakehouse.bronze_doctor_schedules'</span>,
+    <span class="st">'hr'</span>        : <span class="st">'Bronze_Lakehouse.bronze_hr_staff'</span>,
+    <span class="st">'facilities'</span>: <span class="st">'Bronze_Lakehouse.bronze_room_bookings'</span>,
+}
+
+<span class="kw">for</span> source_name, landing_path <span class="kw">in</span> SOURCES.items():
+    print(f<span class="st">'\n=== Source: {source_name} ==='</span>)
+
+    <span class="cm"># List all .xlsx files in landing folder</span>
+    <span class="kw">try</span>:
+        files = [f <span class="kw">for</span> f <span class="kw">in</span> mssparkutils.fs.ls(landing_path)
+                 <span class="kw">if</span> f.name.endswith(<span class="st">'.xlsx'</span>)]
+    <span class="kw">except</span>:
+        print(f<span class="st">'  No landing folder yet: {landing_path} — skipping'</span>)
+        <span class="kw">continue</span>
+
+    <span class="kw">if not</span> files:
+        print(f<span class="st">'  No new files in landing folder'</span>)
+        <span class="kw">continue</span>
+
+    <span class="kw">for</span> f <span class="kw">in</span> files:
+        batch_id = str(uuid.uuid4())
+        print(f<span class="st">'  File: {f.name}'</span>)
+
+        <span class="kw">try</span>:
+            <span class="cm"># Step 1: Validate filename convention</span>
+            validate_filename(f.name)
+
+            <span class="cm"># Step 2: Compute hash</span>
+            file_hash = md5_of_file(f.path)
+            print(f<span class="st">'  Hash: {file_hash[:8]}...'</span>)
+
+            <span class="cm"># Step 3: Check registry</span>
+            action, existing = check_registry(f.name, file_hash)
+            print(f<span class="st">'  Action: {action}'</span>)
+
+            <span class="kw">if</span> action == <span class="st">'DUPLICATE'</span>:
+                register_file(f.name, f.path, f.size, file_hash,
+                              source_name, <span class="st">'DUPLICATE'</span>, batch_id)
+                move_file(f.path, <span class="st">'rejected'</span>)
+                print(f<span class="st">'  SKIP — duplicate of {existing["file_name"]}'</span>
+                      f<span class="st">'loaded on {existing["processed_at"]}'</span>)
+                <span class="kw">continue</span>
+
+            <span class="kw">if</span> action == <span class="st">'CORRECTION'</span>:
+                print(f<span class="st">'  CORRECTION detected — same name, different content'</span>)
+                print(f<span class="st">'  Original loaded: {existing["processed_at"]}'</span>)
+                <span class="cm"># Still load — Silver MERGE will handle row-level corrections</span>
+
+            <span class="cm"># Step 4: Load to Bronze (all strings — no type casting here)</span>
+            df_raw = spark.read \
+                .format(<span class="st">'com.crealytics.spark.excel'</span>) \
+                .option(<span class="st">'header'</span>, <span class="st">'true'</span>) \
+                .option(<span class="st">'inferSchema'</span>, <span class="st">'false'</span>) \
+                .option(<span class="st">'treatEmptyValuesAsNulls'</span>, <span class="st">'true'</span>) \
+                .load(f.path)
+
+            row_count = df_raw.count()
+            <span class="kw">if</span> row_count == 0:
+                <span class="kw">raise</span> ValueError(<span class="st">'File loaded but contains 0 rows'</span>)
+
+            df_bronze = df_raw \
+                .withColumn(<span class="st">'_ingested_at'</span>,   current_timestamp()) \
+                .withColumn(<span class="st">'_source_file'</span>,   lit(f.name)) \
+                .withColumn(<span class="st">'_source_system'</span>, lit(source_name)) \
+                .withColumn(<span class="st">'_batch_id'</span>,      lit(batch_id)) \
+                .withColumn(<span class="st">'_file_hash'</span>,     lit(file_hash)) \
+                .withColumn(<span class="st">'_is_correction'</span>, lit(action == <span class="st">'CORRECTION'</span>))
+
+            df_bronze.write.format(<span class="st">'delta'</span>).mode(<span class="st">'append'</span>) \
+                .option(<span class="st">'mergeSchema'</span>, <span class="st">'true'</span>) \
+                .saveAsTable(TARGET_TABLES[source_name])
+
+            <span class="cm"># Step 5: Register success and move to processed/</span>
+            register_file(f.name, f.path, f.size, file_hash,
+                          source_name, <span class="st">'SUCCESS'</span>, batch_id, row_count)
+            move_file(f.path, <span class="st">'processed'</span>)
+            print(f<span class="st">'  SUCCESS — {row_count} rows. Batch: {batch_id}'</span>)
+
+        <span class="kw">except</span> ValueError <span class="kw">as</span> ve:
+            <span class="cm"># Naming convention or empty file — reject cleanly</span>
+            register_file(f.name, f.path, f.size,
+                          <span class="st">'UNKNOWN'</span>, source_name, <span class="st">'FAILED'</span>,
+                          batch_id, error=ve)
+            move_file(f.path, <span class="st">'rejected'</span>)
+            print(f<span class="st">'  REJECTED: {ve}'</span>)
+
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="cm"># Unexpected error — register failure, leave file for retry</span>
+            register_file(f.name, f.path, f.size,
+                          <span class="st">'UNKNOWN'</span>, source_name, <span class="st">'FAILED'</span>,
+                          batch_id, error=e)
+            move_file(f.path, <span class="st">'rejected'</span>)
+            print(f<span class="st">'  ERROR: {e}'</span>)
+            <span class="kw">raise</span>  <span class="cm"># re-raise so Fabric Pipeline marks run as FAILED</span>
+
+print(<span class="st">'\nNB_02 complete.'</span>)</div>
+
+  <div class="section-label">Query to check what has been processed — your daily monitoring query</div>
+  <div class="code"><span class="cm">-- Run this in a Fabric Notebook or SQL endpoint daily</span>
+<span class="kw">SELECT</span>
+    source_system,
+    status,
+    <span class="kw">COUNT</span>(*) <span class="kw">AS</span> file_count,
+    <span class="kw">SUM</span>(row_count) <span class="kw">AS</span> total_rows,
+    <span class="kw">MAX</span>(detected_at) <span class="kw">AS</span> last_seen
+<span class="kw">FROM</span> Bronze_Lakehouse.file_ingestion_registry
+<span class="kw">WHERE</span> detected_at >= <span class="kw">current_date</span>() - 7
+<span class="kw">GROUP BY</span> source_system, status
+<span class="kw">ORDER BY</span> source_system, status;</div>
+
+  <div class="success-box">The _file_hash and _is_correction columns added to every Bronze row mean you can always trace any Bronze record back to the exact file it came from, whether it was a new load or a correction — full audit trail at row level.</div>
+</div>
+
+<script>
+function show(id, el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>

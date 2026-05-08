@@ -1,0 +1,507 @@
+
+<h2 class="sr-only">Interactive guide to all Medallion architecture separation patterns in Microsoft Fabric, comparing 5 approaches with pros, cons, and recommendations.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:1rem 0 1.25rem}
+.tab{padding:6px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+.arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1.25rem}
+.layer-card{border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);overflow:hidden}
+.layer-header{padding:10px 14px;font-size:13px;font-weight:500}
+.layer-body{padding:10px 14px;font-size:12px;color:var(--color-text-secondary);line-height:1.6;border-top:0.5px solid var(--color-border-tertiary)}
+.bronze-h{background:#FEF3C7;color:#92400E}
+.silver-h{background:#F1F5F9;color:#334155}
+.gold-h{background:#FEF9C3;color:#854D0E}
+.warehouse-h{background:#EDE9FE;color:#4C1D95}
+.combined-h{background:#ECFDF5;color:#065F46}
+.pro-con-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+.pro-box,.con-box{border-radius:var(--border-radius-md);padding:12px 14px}
+.pro-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success)}
+.con-box{background:var(--color-background-danger);border:0.5px solid var(--color-border-danger)}
+.pro-box .box-title{font-size:12px;font-weight:500;color:var(--color-text-success);margin-bottom:8px}
+.con-box .box-title{font-size:12px;font-weight:500;color:var(--color-text-danger);margin-bottom:8px}
+.pro-box li,.con-box li{font-size:12px;color:var(--color-text-secondary);line-height:1.7;list-style:none;padding-left:14px;position:relative}
+.pro-box li::before{content:"✓";position:absolute;left:0;color:var(--color-text-success);font-size:11px}
+.con-box li::before{content:"✗";position:absolute;left:0;color:var(--color-text-danger);font-size:11px}
+.verdict{border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);padding:14px 16px;margin-bottom:1.25rem}
+.verdict-label{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.verdict-text{font-size:13px;color:var(--color-text-primary);line-height:1.6}
+.badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:var(--border-radius-md);font-weight:500;margin-left:8px}
+.badge-best{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-good{background:var(--color-background-info);color:var(--color-text-info)}
+.badge-avoid{background:var(--color-background-danger);color:var(--color-text-danger)}
+.badge-advanced{background:var(--color-background-warning);color:var(--color-text-warning)}
+.detail-row{display:grid;grid-template-columns:140px 1fr;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:13px}
+.detail-row:last-child{border-bottom:none}
+.detail-label{color:var(--color-text-secondary);font-size:12px}
+.detail-value{color:var(--color-text-primary);line-height:1.5}
+.section-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:10px}
+.note-box{background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin-bottom:1rem}
+.flow-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.flow-box{padding:7px 12px;border-radius:var(--border-radius-md);font-size:12px;font-weight:500;white-space:nowrap}
+.flow-arrow{font-size:14px;color:var(--color-text-tertiary)}
+.compare-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1.25rem}
+.compare-table th{background:var(--color-background-secondary);font-size:11px;font-weight:500;color:var(--color-text-secondary);padding:8px 12px;text-align:left;border-bottom:0.5px solid var(--color-border-tertiary)}
+.compare-table td{padding:8px 12px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:top}
+.compare-table tr:last-child td{border-bottom:none}
+.compare-table tr:nth-child(even) td{background:var(--color-background-secondary)}
+.tick{color:var(--color-text-success);font-weight:500}
+.cross{color:var(--color-text-danger)}
+.mid{color:var(--color-text-warning)}
+</style>
+
+<div class="tabs" id="tabBar">
+  <div class="tab active" onclick="show(0,this)">Option 1: 3 Lakehouses</div>
+  <div class="tab" onclick="show(1,this)">Option 2: 1 Lakehouse</div>
+  <div class="tab" onclick="show(2,this)">Option 3: Lakehouse + Warehouse</div>
+  <div class="tab" onclick="show(3,this)">Option 4: All Warehouse</div>
+  <div class="tab" onclick="show(4,this)">Option 5: Hybrid</div>
+  <div class="tab" onclick="show(5,this)">Side-by-side comparison</div>
+</div>
+
+<div id="p0" class="panel active">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <span class="section-title">Option 1 — Three separate Lakehouses</span>
+    <span class="badge badge-best">Recommended for most</span>
+  </div>
+  <div class="flow-row">
+    <div class="flow-box" style="background:#FEF3C7;color:#92400E">Bronze Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#F1F5F9;color:#334155">Silver Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#FEF9C3;color:#854D0E">Gold Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Power BI (Direct Lake)</div>
+  </div>
+  <div class="arch-grid">
+    <div class="layer-card">
+      <div class="layer-header bronze-h">Bronze Lakehouse</div>
+      <div class="layer-body">Raw Delta tables, append-only. Source files in <strong>Files/</strong>. Tables in <strong>Tables/</strong>. No transformations. 7-year retention.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header silver-h">Silver Lakehouse</div>
+      <div class="layer-body">Cleansed, deduplicated conformed entities. SCD Type 2 history. Delta MERGE for upserts. DQ checks run here.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header gold-h">Gold Lakehouse</div>
+      <div class="layer-body">Star schema dimensional model. Fact + dimension tables. Consumed directly by Power BI via Direct Lake mode.</div>
+    </div>
+  </div>
+  <div class="pro-con-grid">
+    <div class="pro-box">
+      <div class="box-title">Advantages</div>
+      <ul>
+        <li>Hard physical boundary — a report literally cannot query Bronze</li>
+        <li>Independent access control per layer (RBAC, sensitivity labels)</li>
+        <li>Independent retention policies per layer</li>
+        <li>Independent compute and capacity limits</li>
+        <li>Purview lineage tracks movement between Lakehouses clearly</li>
+        <li>Easier to swap Gold for a Warehouse later without touching Bronze/Silver</li>
+        <li>Teams can own individual layers (ingestion team, transformation team)</li>
+      </ul>
+    </div>
+    <div class="con-box">
+      <div class="box-title">Trade-offs</div>
+      <ul>
+        <li>Three Lakehouse items to manage in the workspace</li>
+        <li>Cross-Lakehouse reads in PySpark need explicit qualified names</li>
+        <li>Slightly more setup steps initially</li>
+        <li>Capacity costs apply per Lakehouse if on separate capacities</li>
+      </ul>
+    </div>
+  </div>
+  <div class="verdict">
+    <div class="verdict-label">When to use</div>
+    <div class="verdict-text">Production data platforms with multiple teams, GDPR/regulated data, or where different departments own different layers. This is the pattern used in the university implementation guide — medical data governance requires hard Bronze isolation.</div>
+  </div>
+  <div class="section-title" style="margin-bottom:8px">Cross-Lakehouse read pattern in PySpark</div>
+  <div style="background:#0F172A;border-radius:var(--border-radius-md);padding:14px 16px;font-family:var(--font-mono);font-size:12px;color:#5DCAA5;line-height:1.8">
+    <span style="color:#888"># From Silver Notebook, reading Bronze data:</span><br>
+    df = spark.read.table(<span style="color:#FAC775">"Bronze_Lakehouse.bronze_training_enrolments"</span>)<br><br>
+    <span style="color:#888"># Writing to Silver — fully qualified:</span><br>
+    df.write.format(<span style="color:#FAC775">"delta"</span>).mode(<span style="color:#FAC775">"append"</span>)<br>
+    &nbsp;&nbsp;.saveAsTable(<span style="color:#FAC775">"Silver_Lakehouse.silver_training_enrolments"</span>)
+  </div>
+</div>
+
+<div id="p1" class="panel">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <span class="section-title">Option 2 — One Lakehouse, separate schemas/folders</span>
+    <span class="badge badge-good">Good for small teams</span>
+  </div>
+  <div class="flow-row">
+    <div class="flow-box" style="background:#ECFDF5;color:#065F46">Single Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#FEF3C7;color:#92400E">Tables/bronze_*</div>
+    <span class="flow-arrow">+</span>
+    <div class="flow-box" style="background:#F1F5F9;color:#334155">Tables/silver_*</div>
+    <span class="flow-arrow">+</span>
+    <div class="flow-box" style="background:#FEF9C3;color:#854D0E">Tables/gold_*</div>
+  </div>
+  <div class="arch-grid">
+    <div class="layer-card">
+      <div class="layer-header combined-h">Tables/</div>
+      <div class="layer-body">All Delta tables in one Lakehouse. Naming convention separates layers: <code>bronze_</code>, <code>silver_</code>, <code>gold_</code> prefix on every table name.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header combined-h">Files/</div>
+      <div class="layer-body">Raw source files in <code>Files/raw/bronze/</code>, staging in <code>Files/staging/</code>. All in the same OneLake path.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header combined-h">Access Control</div>
+      <div class="layer-body">All access managed at workspace level only — no layer-level isolation. Everyone with workspace access sees all tables.</div>
+    </div>
+  </div>
+  <div class="pro-con-grid">
+    <div class="pro-box">
+      <div class="box-title">Advantages</div>
+      <ul>
+        <li>Simplest setup — one item to manage</li>
+        <li>No cross-Lakehouse qualified names in notebooks</li>
+        <li>Easiest for a solo developer or small team</li>
+        <li>Lower workspace item count</li>
+      </ul>
+    </div>
+    <div class="con-box">
+      <div class="box-title">Trade-offs</div>
+      <ul>
+        <li>No physical access boundary — Power BI can accidentally see Bronze</li>
+        <li>Cannot apply different retention per layer</li>
+        <li>Cannot assign different sensitivity labels per layer</li>
+        <li>Hard to split ownership between teams</li>
+        <li>Purview lineage less clear — all assets in same container</li>
+        <li>Scales poorly — all tables in one list becomes unwieldy</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note-box">⚠ Not recommended for the university project — medical data requires Bronze to be physically isolated from analyst access. A governance auditor expects layer-level access control, which this option cannot provide.</div>
+  <div class="verdict">
+    <div class="verdict-label">When to use</div>
+    <div class="verdict-text">Proof-of-concept, personal projects, or very small teams (1–2 engineers) with non-sensitive data where simplicity outweighs governance requirements.</div>
+  </div>
+</div>
+
+<div id="p2" class="panel">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <span class="section-title">Option 3 — Lakehouses (Bronze + Silver) + Warehouse (Gold)</span>
+    <span class="badge badge-best">Best for SQL-first teams</span>
+  </div>
+  <div class="flow-row">
+    <div class="flow-box" style="background:#FEF3C7;color:#92400E">Bronze Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#F1F5F9;color:#334155">Silver Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Gold Warehouse (T-SQL)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Power BI (DirectQuery or Import)</div>
+  </div>
+  <div class="arch-grid">
+    <div class="layer-card">
+      <div class="layer-header bronze-h">Bronze Lakehouse</div>
+      <div class="layer-body">Raw ingestion via PySpark/ADF. Delta tables. Append-only. Spark is the right engine for messy raw data.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header silver-h">Silver Lakehouse</div>
+      <div class="layer-body">PySpark transformations, Delta MERGE for SCD Type 2. PySpark is better than T-SQL for complex cleansing logic.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header warehouse-h">Gold Warehouse</div>
+      <div class="layer-body">T-SQL dimensional model. Stored procedures for Gold logic. Views, RBAC, DDM. SSRS-compatible. Full SQL Server semantics.</div>
+    </div>
+  </div>
+  <div class="pro-con-grid">
+    <div class="pro-box">
+      <div class="box-title">Advantages</div>
+      <ul>
+        <li>Best engine for each job — Spark for raw/messy, SQL for structured Gold</li>
+        <li>Gold Warehouse supports stored procedures, views, DDM natively</li>
+        <li>SQL-native analysts and BI developers work in familiar T-SQL</li>
+        <li>Warehouse has full ANSI SQL compliance — easier query migration</li>
+        <li>Power BI DirectQuery on Warehouse is more predictable than Direct Lake for complex models</li>
+        <li>Works well if university already has SQL Server expertise</li>
+      </ul>
+    </div>
+    <div class="con-box">
+      <div class="box-title">Trade-offs</div>
+      <ul>
+        <li>Two different engines to understand (Spark + T-SQL)</li>
+        <li>Warehouse does not support Direct Lake mode — must use DirectQuery or Import</li>
+        <li>Loading Silver → Warehouse requires a pipeline step (COPY INTO or ADF)</li>
+        <li>Warehouse storage costs separately from Lakehouse</li>
+      </ul>
+    </div>
+  </div>
+  <div class="verdict">
+    <div class="verdict-label">When to use</div>
+    <div class="verdict-text">When the Gold layer consumers are SQL-first (BI analysts, report developers) and need stored procedures, complex views, or need to migrate existing SQL Server models into Fabric. Strong choice if the university already has SQL Server skills.</div>
+  </div>
+  <div class="section-title" style="margin-bottom:8px">Loading Silver → Gold Warehouse</div>
+  <div style="background:#0F172A;border-radius:var(--border-radius-md);padding:14px 16px;font-family:var(--font-mono);font-size:12px;color:#5DCAA5;line-height:1.8">
+    <span style="color:#888">-- In Gold Warehouse, create external table over Silver Delta:</span><br>
+    CREATE TABLE dbo.dim_student AS<br>
+    SELECT * FROM Silver_Lakehouse.silver_students<br>
+    WHERE is_current = 1;<br><br>
+    <span style="color:#888">-- Or use COPY INTO from Silver parquet files:</span><br>
+    COPY INTO dbo.fact_training_completion<br>
+    FROM <span style="color:#FAC775">'abfss://silver@onelake.dfs.fabric.microsoft.com/...'</span><br>
+    WITH (FILE_TYPE = <span style="color:#FAC775">'PARQUET'</span>);
+  </div>
+</div>
+
+<div id="p3" class="panel">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <span class="section-title">Option 4 — All layers in Fabric Warehouse only</span>
+    <span class="badge badge-avoid">Avoid for this project</span>
+  </div>
+  <div class="flow-row">
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Single Warehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Schema: bronze</div>
+    <span class="flow-arrow">+</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Schema: silver</div>
+    <span class="flow-arrow">+</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Schema: gold</div>
+  </div>
+  <div class="arch-grid">
+    <div class="layer-card">
+      <div class="layer-header warehouse-h">schema: bronze</div>
+      <div class="layer-body">Raw staging tables in T-SQL. Works if all sources are relational — struggles with nested JSON, semi-structured Excel.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header warehouse-h">schema: silver</div>
+      <div class="layer-body">T-SQL transformations via stored procedures or CTAS. No PySpark — complex transformations become very verbose SQL.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header warehouse-h">schema: gold</div>
+      <div class="layer-body">Dimensional model, views, aggregates in T-SQL. This part is well-suited to the Warehouse — it's the other layers that are the problem.</div>
+    </div>
+  </div>
+  <div class="pro-con-grid">
+    <div class="pro-box">
+      <div class="box-title">Advantages</div>
+      <ul>
+        <li>Single item — one connection string for everything</li>
+        <li>Pure T-SQL — no Spark knowledge required at all</li>
+        <li>Schema-level access control (GRANT on schema)</li>
+        <li>Good if all sources are already structured/relational</li>
+      </ul>
+    </div>
+    <div class="con-box">
+      <div class="box-title">Trade-offs</div>
+      <ul>
+        <li>Fabric Warehouse cannot natively read Excel files</li>
+        <li>Semi-structured JSON from REST APIs needs preprocessing first</li>
+        <li>No Delta Change Data Feed or time travel in Warehouse tables</li>
+        <li>PySpark features (schema evolution, CDC streams) unavailable</li>
+        <li>Transformation logic in stored procedures becomes unmaintainable at scale</li>
+        <li>Warehouse storage is more expensive than Lakehouse Delta for raw/Bronze volume</li>
+      </ul>
+    </div>
+  </div>
+  <div class="note-box">⚠ The university has Excel + REST API sources. The Fabric Warehouse cannot ingest these natively — you'd need an ADF pipeline to flatten them before they even reach the Warehouse. At that point you're doing the Bronze work outside anyway, making "all in Warehouse" meaningless. Not the right pattern here.</div>
+  <div class="verdict">
+    <div class="verdict-label">When it makes sense</div>
+    <div class="verdict-text">Only when all sources are already structured SQL databases (SQL Server, PostgreSQL, Snowflake mirrors) and the team has zero Spark experience. Even then, most architects use at least a Lakehouse for Bronze to retain raw data cheaply.</div>
+  </div>
+</div>
+
+<div id="p4" class="panel">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <span class="section-title">Option 5 — Hybrid (Lakehouses + Warehouse + Eventhouse)</span>
+    <span class="badge badge-advanced">Enterprise / advanced</span>
+  </div>
+  <div class="flow-row">
+    <div class="flow-box" style="background:#FEF3C7;color:#92400E">Bronze Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#F1F5F9;color:#334155">Silver Lakehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Gold Warehouse</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#EDE9FE;color:#4C1D95">Power BI</div>
+  </div>
+  <div class="flow-row">
+    <div class="flow-box" style="background:#ECFDF5;color:#065F46">Real-time source</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#ECFDF5;color:#065F46">Eventstream</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#ECFDF5;color:#065F46">Eventhouse (KQL)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-box" style="background:#ECFDF5;color:#065F46">Silver Lakehouse (mirror)</div>
+  </div>
+  <div class="arch-grid">
+    <div class="layer-card">
+      <div class="layer-header bronze-h">Bronze Lakehouse</div>
+      <div class="layer-body">Batch sources: Excel, daily REST API pulls. Append-only Delta.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header silver-h">Silver Lakehouse</div>
+      <div class="layer-body">Unified entity store. Receives from both Bronze (batch) and Eventhouse (streaming). Single truth for Gold.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header warehouse-h">Gold Warehouse</div>
+      <div class="layer-body">T-SQL analytical layer. Reads from Silver via shortcuts. Views, DDM, RBAC.</div>
+    </div>
+    <div class="layer-card">
+      <div class="layer-header combined-h">Eventhouse (KQL)</div>
+      <div class="layer-body">Real-time event stream landing zone. Near-instant latency for live feeds. Mirrors to Silver Lakehouse for unified access.</div>
+    </div>
+  </div>
+  <div class="pro-con-grid">
+    <div class="pro-box">
+      <div class="box-title">Advantages</div>
+      <ul>
+        <li>Right engine for every workload — batch, streaming, SQL analytics</li>
+        <li>Eventhouse gives sub-second latency for real-time alerts</li>
+        <li>Gold Warehouse serves T-SQL consumers without Spark knowledge</li>
+        <li>Scales independently — each component scales on its own capacity</li>
+        <li>OneLake Shortcuts allow Gold Warehouse to query Silver data without copying it</li>
+      </ul>
+    </div>
+    <div class="con-box">
+      <div class="box-title">Trade-offs</div>
+      <ul>
+        <li>Most complex setup — 4+ Fabric items to maintain</li>
+        <li>Team needs Spark, KQL, and T-SQL skills simultaneously</li>
+        <li>Higher cost at smaller scale</li>
+        <li>Overkill unless real-time streaming is a genuine requirement</li>
+      </ul>
+    </div>
+  </div>
+  <div class="verdict">
+    <div class="verdict-label">When to use</div>
+    <div class="verdict-text">When the platform genuinely has both batch (Excel/API) and real-time (event stream, IoT, webhook) sources and needs them unified in the same Silver layer. For the university, consider this as Phase 2 once batch pipelines are stable — not day one.</div>
+  </div>
+</div>
+
+<div id="p5" class="panel">
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">All five options compared across the dimensions that matter most.</p>
+  <div style="overflow-x:auto">
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th style="width:140px">Criterion</th>
+        <th>Option 1<br>3 Lakehouses</th>
+        <th>Option 2<br>1 Lakehouse</th>
+        <th>Option 3<br>LH + Warehouse</th>
+        <th>Option 4<br>All Warehouse</th>
+        <th>Option 5<br>Hybrid</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="detail-label">Excel ingestion</td>
+        <td class="tick">✓ Native PySpark</td>
+        <td class="tick">✓ Native PySpark</td>
+        <td class="tick">✓ PySpark to LH</td>
+        <td class="cross">✗ Needs pre-processing</td>
+        <td class="tick">✓ PySpark to Bronze LH</td>
+      </tr>
+      <tr>
+        <td class="detail-label">REST API (JSON)</td>
+        <td class="tick">✓ PySpark flatten</td>
+        <td class="tick">✓ PySpark flatten</td>
+        <td class="tick">✓ PySpark to LH</td>
+        <td class="cross">✗ Must flatten before load</td>
+        <td class="tick">✓ PySpark or Eventstream</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Real-time streaming</td>
+        <td class="mid">~ Spark Streaming</td>
+        <td class="mid">~ Spark Streaming</td>
+        <td class="mid">~ Spark Streaming</td>
+        <td class="cross">✗ Not supported</td>
+        <td class="tick">✓ Eventhouse native</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Layer access control</td>
+        <td class="tick">✓ Per Lakehouse RBAC</td>
+        <td class="cross">✗ Workspace-level only</td>
+        <td class="tick">✓ Per item RBAC</td>
+        <td class="mid">~ Per schema GRANT</td>
+        <td class="tick">✓ Per item RBAC</td>
+      </tr>
+      <tr>
+        <td class="detail-label">GDPR / data isolation</td>
+        <td class="tick">✓ Strong</td>
+        <td class="cross">✗ Weak</td>
+        <td class="tick">✓ Strong</td>
+        <td class="mid">~ Moderate</td>
+        <td class="tick">✓ Strong</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Direct Lake (Power BI)</td>
+        <td class="tick">✓ From Gold LH</td>
+        <td class="tick">✓ From any table</td>
+        <td class="cross">✗ Not from Warehouse</td>
+        <td class="cross">✗ Not from Warehouse</td>
+        <td class="mid">~ From Silver LH only</td>
+      </tr>
+      <tr>
+        <td class="detail-label">T-SQL / stored procs</td>
+        <td class="cross">✗ PySpark only</td>
+        <td class="cross">✗ PySpark only</td>
+        <td class="tick">✓ In Warehouse</td>
+        <td class="tick">✓ Full SQL Server</td>
+        <td class="tick">✓ In Warehouse</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Delta time travel</td>
+        <td class="tick">✓ All layers</td>
+        <td class="tick">✓ All layers</td>
+        <td class="tick">✓ Bronze + Silver</td>
+        <td class="cross">✗ Warehouse tables only</td>
+        <td class="tick">✓ Bronze + Silver</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Purview lineage</td>
+        <td class="tick">✓ Clear cross-LH</td>
+        <td class="mid">~ Within one item</td>
+        <td class="tick">✓ LH → Warehouse</td>
+        <td class="mid">~ Schema-level only</td>
+        <td class="tick">✓ Full end-to-end</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Setup complexity</td>
+        <td>Medium</td>
+        <td>Low</td>
+        <td>Medium</td>
+        <td>Low–Medium</td>
+        <td>High</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Team skill needed</td>
+        <td>PySpark + Fabric</td>
+        <td>PySpark + Fabric</td>
+        <td>PySpark + T-SQL</td>
+        <td>T-SQL only</td>
+        <td>PySpark + T-SQL + KQL</td>
+      </tr>
+      <tr>
+        <td class="detail-label">University fit</td>
+        <td class="tick" style="font-weight:500">✓ Best fit</td>
+        <td class="cross">✗ Not suitable</td>
+        <td class="tick">✓ Good if SQL team</td>
+        <td class="cross">✗ Not suitable</td>
+        <td class="mid">~ Phase 2 evolution</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <div style="background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-lg);padding:14px 16px">
+    <div style="font-size:12px;font-weight:500;color:var(--color-text-success);margin-bottom:8px">Recommendation for the university project</div>
+    <div style="font-size:13px;color:var(--color-text-primary);line-height:1.6">
+      <strong>Start with Option 1</strong> (3 separate Lakehouses). It gives you hard layer isolation for GDPR compliance, Direct Lake for Power BI, and is the cleanest pattern to hand off to a new team. If you find the Gold layer consumers are strongly T-SQL-first, evolve Gold to a Warehouse (Option 3) — the Bronze and Silver Lakehouses do not change at all. Add Eventhouse only when genuine real-time requirements emerge.
+    </div>
+  </div>
+</div>
+
+<script>
+function show(idx, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('p' + idx).classList.add('active');
+  el.classList.add('active');
+}
+</script>

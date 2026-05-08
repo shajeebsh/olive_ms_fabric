@@ -1,0 +1,14 @@
+{
+  "environment": "PROD",
+  "workspace": "UNIV-PROD",
+  "git_branch": "main",
+  "lakehouses": {
+    "bronze": "Bronze_Lakehouse",
+    "silver": "Silver_Lakehouse",
+    "gold": "Gold_Lakehouse"
+  },
+  "warehouse": "Gold_Warehouse",
+  "data_policy": "live_data_rbac_required",
+  "schedule_enabled": true
+}
+
