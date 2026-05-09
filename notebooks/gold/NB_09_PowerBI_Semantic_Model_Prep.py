@@ -20,11 +20,29 @@ summary.write.format("delta").mode("overwrite").option("overwriteSchema", "true"
     "Gold_Lakehouse.vw_training_summary"
 )
 
+file_ingestion_summary = spark.sql("""
+    SELECT
+        cast(detected_at AS DATE) AS load_date,
+        source_system,
+        status,
+        count(*) AS file_count,
+        sum(row_count) AS total_rows,
+        max(detected_at) AS last_seen
+    FROM Bronze_Lakehouse.file_ingestion_registry
+    WHERE cast(detected_at AS DATE) >= current_date() - 30
+    GROUP BY cast(detected_at AS DATE), source_system, status
+""")
+
+file_ingestion_summary.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
+    "Gold_Lakehouse.vw_file_ingestion_summary"
+)
+
 required_tables = [
     "Gold_Lakehouse.dim_student",
     "Gold_Lakehouse.dim_course",
     "Gold_Lakehouse.fact_training_completion",
     "Gold_Lakehouse.vw_training_summary",
+    "Gold_Lakehouse.vw_file_ingestion_summary",
 ]
 
 for table_name in required_tables:
@@ -32,4 +50,3 @@ for table_name in required_tables:
     print(f"{table_name}: {rows} rows")
 
 print("Power BI semantic model prep complete.")
-

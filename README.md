@@ -71,6 +71,9 @@ This separation keeps raw data isolated, simplifies retention and governance, gi
 
 - Bronze preserves source data as-is and never overwrites history.
 - Duplicate file detection happens before Bronze loading, using file hashes.
+- Excel schema changes are logged to `Bronze_Lakehouse.schema_change_log` before Silver processing.
+- REST API calls are logged to `Bronze_Lakehouse.api_call_log` with response status, duration, and retry count.
+- REST ingestion uses retry, rate-limit, token-cache, and circuit-breaker patterns.
 - Row-level deduplication and business corrections are handled in Silver.
 - Gold is designed around business questions, not source-system layouts.
 - Production changes move through pull requests and deployment gates.
@@ -78,5 +81,4 @@ This separation keeps raw data isolated, simplifies retention and governance, gi
 
 ## Source Material Incorporated
 
-The structure and content are based on the supplied implementation guide, PySpark notebook library, file ingestion guide, Medallion separation guide, DevOps guide, day-one toolkit, contract-success guide, and implementation question checklist.
-
+The structure and content are based on the supplied implementation guide, PySpark notebook library, file ingestion guide, Medallion separation guide, DevOps guide, day-one toolkit, contract-success guide, implementation question checklist, and the later v3 implementation updates.

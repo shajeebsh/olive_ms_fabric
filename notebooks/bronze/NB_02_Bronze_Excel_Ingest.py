@@ -36,6 +36,13 @@ SOURCES = {
     },
 }
 
+EXPECTED_COLUMNS = {
+    "excel_training": ["StudentID", "CourseCode", "EnrolDate", "CompletionDate", "Score", "Status"],
+    "excel_medical": ["DoctorID", "ScheduleDate", "ShiftStart", "ShiftEnd", "HoursLogged", "ProcedureCode", "Department"],
+    "excel_hr": ["EmployeeID", "FirstName", "LastName", "JobTitle", "Department", "ContractedHoursPerMonth"],
+    "excel_facilities": ["RoomID", "BookedBy", "BookingDate", "StartTime", "EndTime", "Purpose"],
+}
+
 
 def md5_of_file(path):
     content = mssparkutils.fs.head(path, 10 * 1024 * 1024)
@@ -62,6 +69,15 @@ def registry_action(file_name, file_hash):
     if existing_name.count():
         return "CORRECTION"
 
+    failed_hash = spark.sql(f"""
+        SELECT file_id
+        FROM Bronze_Lakehouse.file_ingestion_registry
+        WHERE file_hash_md5 = '{file_hash}' AND status = 'FAILED'
+        LIMIT 1
+    """)
+    if failed_hash.count():
+        return "RETRY"
+
     return "NEW"
 
 
@@ -87,6 +103,49 @@ def register_file(file_name, file_path, file_size, file_hash, source, status, ba
         "file_hash_md5 STRING, source_system STRING, detected_at TIMESTAMP, "
         "processed_at TIMESTAMP, row_count LONG, status STRING, batch_id STRING, error_message STRING",
     ).write.format("delta").mode("append").saveAsTable("Bronze_Lakehouse.file_ingestion_registry")
+
+
+def log_schema_drift(source_system, file_name, actual_columns, batch_id):
+    expected_columns = EXPECTED_COLUMNS.get(source_system, [])
+    if not expected_columns:
+        return 0
+
+    changes = []
+    now = datetime.utcnow()
+    for column_name in actual_columns:
+        if column_name not in expected_columns:
+            changes.append((
+                str(uuid.uuid4()),
+                source_system,
+                file_name,
+                "NEW_COLUMN",
+                column_name,
+                None,
+                now,
+                batch_id,
+                False,
+            ))
+    for column_name in expected_columns:
+        if column_name not in actual_columns:
+            changes.append((
+                str(uuid.uuid4()),
+                source_system,
+                file_name,
+                "REMOVED_COLUMN",
+                column_name,
+                column_name,
+                now,
+                batch_id,
+                False,
+            ))
+
+    if changes:
+        spark.createDataFrame(
+            changes,
+            "change_id STRING, source_system STRING, file_name STRING, change_type STRING, "
+            "column_name STRING, previous_value STRING, detected_at TIMESTAMP, batch_id STRING, resolved BOOLEAN",
+        ).write.format("delta").mode("append").saveAsTable("Bronze_Lakehouse.schema_change_log")
+    return len(changes)
 
 
 def move_file(src_path, zone):
@@ -128,9 +187,17 @@ for source_name, cfg in SOURCES.items():
                 spark.read.format("com.crealytics.spark.excel")
                 .option("header", "true")
                 .option("inferSchema", "false")
+                .option("treatEmptyValuesAsNulls", "true")
                 .option("dataAddress", "Sheet1!A1")
                 .load(file_path)
             )
+            row_count = df_raw.count()
+            if row_count == 0:
+                raise ValueError(f'File "{file_name}" contains 0 rows')
+
+            drift_count = log_schema_drift(cfg["system"], file_name, df_raw.columns, batch_id)
+            if drift_count:
+                print(f"Schema drift detected for {file_name}: {drift_count} change(s). Check schema_change_log.")
 
             df_bronze = (
                 df_raw.withColumn("_ingested_at", current_timestamp())
@@ -142,11 +209,9 @@ for source_name, cfg in SOURCES.items():
             )
 
             df_bronze.write.format("delta").mode("append").option("mergeSchema", "true").saveAsTable(cfg["table"])
-            row_count = df_bronze.count()
             register_file(file_name, file_path, file_info.size, file_hash, cfg["system"], "SUCCESS", batch_id, row_count)
             move_file(file_path, "processed")
         except Exception as exc:
             register_file(file_name, file_path, file_info.size, file_hash, cfg["system"], "FAILED", batch_id, error=exc)
             move_file(file_path, "rejected")
             raise
-

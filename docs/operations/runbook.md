@@ -45,6 +45,41 @@ Resolution:
 3. Update secret store.
 4. Rerun REST ingestion notebook.
 
+### REST API Fails Repeatedly or Hits Rate Limits
+
+Likely causes:
+
+- Source API is unavailable.
+- Rate limits are too low for the current page size.
+- Network path is blocked.
+- Token refresh flow is failing.
+
+Resolution:
+
+1. Query `Bronze_Lakehouse.api_call_log` for the last 24 hours.
+2. Check `status`, `http_status`, `response_ms`, and `attempt_num`.
+3. If 429 responses are frequent, reduce page size or adjust schedule.
+4. If repeated 503 responses occur, leave the circuit open and contact the source owner.
+5. Do not manually advance the watermark unless records were successfully written to Bronze.
+
+### Schema Drift Detected
+
+Likely causes:
+
+- Source owner added a new Excel column.
+- Source owner renamed or deleted a column.
+- Header row changed or shifted.
+
+Resolution:
+
+1. Query `Bronze_Lakehouse.schema_change_log` where `resolved = false`.
+2. Compare the file headers against the STTM.
+3. Confirm whether the change is intentional with the source owner.
+4. Update `docs/implementation/source-to-target-mapping.md`.
+5. Update `EXPECTED_COLUMNS` in `NB_02_Bronze_Excel_Ingest.py`.
+6. Update Silver mapping code if the column is required.
+7. Mark the schema change as resolved.
+
 ### Silver DQ Failure
 
 Likely causes:
@@ -94,4 +129,3 @@ Resolution:
 - Confirm Purview scans completed.
 - Review access changes.
 - Archive processed files older than retention threshold.
-

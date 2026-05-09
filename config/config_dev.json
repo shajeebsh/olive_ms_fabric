@@ -2,6 +2,11 @@
   "environment": "DEV",
   "workspace": "UNIV-DEV",
   "git_branch": "feature/*",
+  "bronze_lakehouse": "Bronze_Lakehouse",
+  "silver_lakehouse": "Silver_Lakehouse",
+  "gold_lakehouse": "Gold_Lakehouse",
+  "api_base_url": "https://lms-uat.example.org/api/v2",
+  "secret_scope": "fabric-secrets-dev",
   "lakehouses": {
     "bronze": "Bronze_Lakehouse",
     "silver": "Silver_Lakehouse",
@@ -11,4 +16,3 @@
   "data_policy": "synthetic_or_anonymised_only",
   "schedule_enabled": false
 }
-

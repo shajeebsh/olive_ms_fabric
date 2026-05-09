@@ -74,6 +74,38 @@ COMMENT 'Registry of every file seen for duplicate detection'
 TBLPROPERTIES (delta.enableChangeDataFeed = true)
 """)
 
+spark.sql("""
+CREATE TABLE IF NOT EXISTS api_call_log (
+    call_id STRING,
+    api_name STRING,
+    endpoint STRING,
+    http_status INT,
+    attempt_num INT,
+    response_ms LONG,
+    records_returned LONG,
+    watermark_used TIMESTAMP,
+    called_at TIMESTAMP,
+    status STRING,
+    error_message STRING
+) USING DELTA
+COMMENT 'Tracks every REST API call for retry, SLA, and failure monitoring'
+""")
+
+spark.sql("""
+CREATE TABLE IF NOT EXISTS schema_change_log (
+    change_id STRING,
+    source_system STRING,
+    file_name STRING,
+    change_type STRING,
+    column_name STRING,
+    previous_value STRING,
+    detected_at TIMESTAMP,
+    batch_id STRING,
+    resolved BOOLEAN
+) USING DELTA
+COMMENT 'Tracks Excel column header changes between loads'
+""")
+
 folders = [
     "Files/landing/training",
     "Files/landing/medical",
@@ -90,6 +122,7 @@ folders = [
     "Files/archive",
     "Files/profiling_reports",
     "Files/checkpoints",
+    "Files/checkpoints/stream_bronze_to_silver_lms",
 ]
 
 for folder in folders:
@@ -149,4 +182,3 @@ CREATE TABLE IF NOT EXISTS monitoring_metrics (
 """)
 
 print("Control tables and folder structure are ready.")
-
