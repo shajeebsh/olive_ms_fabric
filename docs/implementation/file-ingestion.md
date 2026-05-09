@@ -45,6 +45,32 @@ Create a Delta table named `Bronze_Lakehouse.file_ingestion_registry` to track e
 | `batch_id` | Pipeline run identifier |
 | `error_message` | Failure details |
 
+## Schema Change Log
+
+Version 3 adds a dedicated schema drift audit table: `Bronze_Lakehouse.schema_change_log`.
+
+NB_02 compares the columns in each incoming Excel file with the expected baseline for that source. New or missing columns are logged before the file is written to Bronze.
+
+| Column | Purpose |
+| --- | --- |
+| `change_id` | Unique schema change identifier |
+| `source_system` | Source where the drift was detected |
+| `file_name` | File that introduced the drift |
+| `change_type` | `NEW_COLUMN` or `REMOVED_COLUMN` |
+| `column_name` | Affected column |
+| `previous_value` | Previous expected value when relevant |
+| `detected_at` | Detection timestamp |
+| `batch_id` | Pipeline batch identifier |
+| `resolved` | Set to true after STTM and notebook mappings are updated |
+
+Schema drift should not be ignored. Review unresolved rows before the Silver transformation runs:
+
+```sql
+SELECT *
+FROM Bronze_Lakehouse.schema_change_log
+WHERE resolved = false;
+```
+
 ## Duplicate Scenarios
 
 | Scenario | Detection | Action |
@@ -67,6 +93,15 @@ Create a Delta table named `Bronze_Lakehouse.file_ingestion_registry` to track e
 9. Move successful files to `processed/`.
 10. Move failed or duplicate files to `rejected/`.
 
+## Schema Change Response
+
+1. Review unresolved entries in `schema_change_log`.
+2. Confirm whether the change is intentional or a source error.
+3. Update the STTM document.
+4. Update `EXPECTED_COLUMNS` in `NB_02_Bronze_Excel_Ingest.py`.
+5. Update Silver mappings if the new column is required downstream.
+6. Mark the schema change as resolved after review.
+
 ## Delivery Options
 
 | Option | When to use | Notes |
@@ -88,4 +123,3 @@ room_bookings_YYYY_MM.xlsx
 ```
 
 Bad filenames should be rejected before ingestion and logged with a clear reason.
-

@@ -71,6 +71,24 @@ Only restore data after confirming downstream impact on Gold and Power BI.
 | Documentation | Local credentials |
 | Tests | Temporary profiling output |
 
+## Environment Config Pattern
+
+Each environment has a JSON config file under `config/`. Notebooks should read environment values from config instead of hardcoding Lakehouse names, API URLs, or secret scopes.
+
+Example:
+
+```python
+import json
+
+env = spark.conf.get("pipeline.env", "dev")
+with open(f"config/config_{env}.json") as config_file:
+    cfg = json.load(config_file)
+
+BRONZE = cfg["bronze_lakehouse"]
+SILVER = cfg["silver_lakehouse"]
+GOLD = cfg["gold_lakehouse"]
+```
+
 ## Pull Request Checklist
 
 - Scope is clear.
@@ -80,4 +98,3 @@ Only restore data after confirming downstream impact on Gold and Power BI.
 - Config changes are environment-safe.
 - No secrets are committed.
 - No raw or personal data is committed.
-

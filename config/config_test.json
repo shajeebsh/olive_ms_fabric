@@ -2,6 +2,11 @@
   "environment": "TEST",
   "workspace": "UNIV-TEST",
   "git_branch": "develop",
+  "bronze_lakehouse": "Bronze_Lakehouse",
+  "silver_lakehouse": "Silver_Lakehouse",
+  "gold_lakehouse": "Gold_Lakehouse",
+  "api_base_url": "https://lms-test.example.org/api/v2",
+  "secret_scope": "fabric-secrets-test",
   "lakehouses": {
     "bronze": "Bronze_Lakehouse",
     "silver": "Silver_Lakehouse",
@@ -11,4 +16,3 @@
   "data_policy": "anonymised_or_masked_test_data",
   "schedule_enabled": true
 }
-

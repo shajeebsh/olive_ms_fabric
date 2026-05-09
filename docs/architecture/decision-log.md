@@ -45,3 +45,14 @@ Decision: Use pull requests to promote code from feature branches to `develop`, 
 
 Rationale: This avoids manual copy-paste between Fabric workspaces, provides code review, and enables rollback through Git history.
 
+## ADR-007: Log API Calls and Use Circuit Breakers
+
+Decision: REST API ingestion writes every call to `api_call_log`, retries transient failures, honours `Retry-After` on rate limits, caches OAuth2 tokens, and opens a circuit after repeated failures.
+
+Rationale: Production APIs fail in partial and temporary ways. These patterns protect Fabric capacity, make failures diagnosable, and prevent repeated calls against a down source.
+
+## ADR-008: Track Excel Schema Drift
+
+Decision: Bronze Excel ingestion compares incoming file headers with `EXPECTED_COLUMNS` and logs new or removed columns to `schema_change_log`.
+
+Rationale: Excel sources often change silently. Logging drift before Silver processing makes STTM updates explicit and avoids hidden reporting defects.

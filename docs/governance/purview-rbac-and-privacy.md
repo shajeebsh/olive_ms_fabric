@@ -45,6 +45,14 @@ SharePoint or API source
   -> Report
 ```
 
+Operational audit assets added in v3:
+
+| Table | Governance purpose |
+| --- | --- |
+| `Bronze_Lakehouse.file_ingestion_registry` | Evidence of every file received, loaded, rejected, or marked duplicate |
+| `Bronze_Lakehouse.api_call_log` | Evidence of API availability, retry behaviour, and data pull activity |
+| `Bronze_Lakehouse.schema_change_log` | Evidence of source schema drift review and resolution |
+
 Add notebook markdown annotations for lineage:
 
 ```markdown
@@ -75,4 +83,3 @@ GRANT UNMASK ON Gold_Warehouse.dbo.dim_student TO [DataStewards];
 - Store API keys and secrets in approved secret management.
 - Apply RLS in Power BI for department-scoped dashboards.
 - Review access quarterly.
-
