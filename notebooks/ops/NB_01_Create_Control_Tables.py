@@ -4,8 +4,16 @@
 
 from pyspark.sql.functions import col, current_timestamp
 from delta.tables import DeltaTable
+from src.config_loader import load_config, lakehouse_name, lakehouse_table
+from src.filesystem import get_filesystem
 
-spark.sql("USE Bronze_Lakehouse")
+config = load_config("DEV")
+fs = get_filesystem()
+
+bronze_lh = lakehouse_name(config, "bronze")
+silver_lh = lakehouse_name(config, "silver")
+
+spark.sql(f"USE {bronze_lh}")
 
 spark.sql("""
 CREATE TABLE IF NOT EXISTS control_watermark (
@@ -35,7 +43,7 @@ df_sources = spark.createDataFrame(
     "updated_at", current_timestamp()
 )
 
-DeltaTable.forName(spark, "Bronze_Lakehouse.control_watermark").alias("t").merge(
+DeltaTable.forName(spark, f"{bronze_lh}.control_watermark").alias("t").merge(
     df_sources.alias("s"), "t.source_system = s.source_system"
 ).whenNotMatchedInsertAll().execute()
 
@@ -126,9 +134,9 @@ folders = [
 ]
 
 for folder in folders:
-    mssparkutils.fs.mkdirs(folder)
+    fs.mkdirs(folder)
 
-spark.sql("USE Silver_Lakehouse")
+spark.sql(f"USE {silver_lh}")
 
 spark.sql("""
 CREATE TABLE IF NOT EXISTS control_silver_watermark (

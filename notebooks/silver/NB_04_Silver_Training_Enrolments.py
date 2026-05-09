@@ -3,61 +3,29 @@
 # Purpose: Clean and upsert training enrolments from Bronze to Silver.
 
 from delta.tables import DeltaTable
-from pyspark.sql.functions import col, concat_ws, current_timestamp, lit, md5, to_date, trim, upper, when
+from pyspark.sql.functions import col, current_timestamp
+
+from src.config_loader import load_config, lakehouse_table
+from src.transformations.silver_training import transform_training_enrolments
+
+config = load_config("DEV")
 
 ENTITY = "training_enrolments"
-TARGET_TABLE = "Silver_Lakehouse.silver_training_enrolments"
+TARGET_TABLE = lakehouse_table(config, "silver", "silver_training_enrolments")
+BRONZE_TABLE = lakehouse_table(config, "bronze", "bronze_training_enrolments")
+SILVER_WATERMARK = lakehouse_table(config, "silver", "control_silver_watermark")
 
 df_bronze = spark.sql(f"""
     SELECT *
-    FROM Bronze_Lakehouse.bronze_training_enrolments
+    FROM {BRONZE_TABLE}
     WHERE _ingested_at > (
         SELECT coalesce(max(last_run_ts), timestamp('1900-01-01'))
-        FROM Silver_Lakehouse.control_silver_watermark
+        FROM {SILVER_WATERMARK}
         WHERE entity = '{ENTITY}'
     )
 """)
 
-df_silver = (
-    df_bronze.withColumn("student_id", upper(trim(col("StudentID"))))
-    .withColumn("course_id", upper(trim(col("CourseCode"))))
-    .withColumn("enrolment_date", to_date(col("EnrolDate"), "dd/MM/yyyy"))
-    .withColumn("completion_date", to_date(col("CompletionDate"), "dd/MM/yyyy"))
-    .withColumn("score_pct", col("Score").cast("decimal(5,2)"))
-    .withColumn(
-        "enrolment_status",
-        when(col("Status") == "C", "Completed")
-        .when(col("Status") == "A", "Active")
-        .when(col("Status") == "D", "Dropped")
-        .otherwise("Unknown"),
-    )
-    .withColumn("is_completed", col("enrolment_status") == "Completed")
-    .withColumn("valid_from", current_timestamp())
-    .withColumn("valid_to", lit(None).cast("timestamp"))
-    .withColumn("is_current", col("student_id").isNotNull())
-    .withColumn("_silver_created", current_timestamp())
-    .withColumn("_silver_updated", current_timestamp())
-    .withColumn(
-        "row_hash",
-        md5(concat_ws("|", col("student_id"), col("course_id"), col("enrolment_status"), col("score_pct"))),
-    )
-    .select(
-        "student_id",
-        "course_id",
-        "enrolment_date",
-        "completion_date",
-        "score_pct",
-        "enrolment_status",
-        "is_completed",
-        "valid_from",
-        "valid_to",
-        "is_current",
-        "row_hash",
-        "_silver_created",
-        "_silver_updated",
-        "_source_system",
-    )
-)
+df_silver = transform_training_enrolments(df_bronze)
 
 if not spark.catalog.tableExists(TARGET_TABLE):
     df_silver.write.format("delta").mode("overwrite").saveAsTable(TARGET_TABLE)
@@ -78,7 +46,7 @@ else:
 rows_merged = df_silver.count()
 
 spark.sql(f"""
-    MERGE INTO Silver_Lakehouse.control_silver_watermark t
+    MERGE INTO {SILVER_WATERMARK} t
     USING (
         SELECT '{ENTITY}' AS entity,
                current_timestamp() AS last_run_ts,

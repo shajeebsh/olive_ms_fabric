@@ -2,51 +2,68 @@
 # Layer: Silver
 # Purpose: Log data quality results and fail fast on severe issues.
 
-import uuid
-from pyspark.sql.functions import col, current_timestamp, lit
+from pyspark.sql.functions import col, current_timestamp
 
-RUN_ID = str(uuid.uuid4())
+from src.config_loader import load_config, lakehouse_table
+from src.data_quality import dq_check
+
+config = load_config("DEV")
+dq_log_table = lakehouse_table(config, "silver", "dq_log")
+
 results = []
 
+training = spark.table(lakehouse_table(config, "silver", "silver_training_enrolments"))
 
-def dq_check(entity, name, description, df, fail_condition, severity="HIGH"):
-    total_rows = df.count()
-    failed_rows = df.filter(fail_condition).count()
-    fail_pct = round(failed_rows / total_rows * 100, 2) if total_rows else 0
-    status = "PASS" if failed_rows == 0 else ("WARN" if severity != "HIGH" else "FAIL")
-    results.append((RUN_ID, entity, name, description, total_rows, failed_rows, fail_pct, status, severity))
-    print(f"{status}: {entity}.{name} failed {failed_rows}/{total_rows}")
-
-
-training = spark.table("Silver_Lakehouse.silver_training_enrolments")
-
-dq_check("training_enrolments", "no_null_student_id", "Student id must not be null", training, col("student_id").isNull())
-dq_check("training_enrolments", "no_null_course_id", "Course id must not be null", training, col("course_id").isNull())
-dq_check(
-    "training_enrolments",
-    "score_range_0_100",
-    "Score must be between 0 and 100 when supplied",
-    training,
-    col("score_pct").isNotNull() & ((col("score_pct") < 0) | (col("score_pct") > 100)),
+results.append(
+    dq_check(training, "training_enrolments", "no_null_student_id", "Student id must not be null", col("student_id").isNull())
 )
-dq_check(
-    "training_enrolments",
-    "enrolment_date_not_future",
-    "Enrolment date must not be in the future",
-    training,
-    col("enrolment_date") > current_timestamp().cast("date"),
+results.append(
+    dq_check(training, "training_enrolments", "no_null_course_id", "Course id must not be null", col("course_id").isNull())
 )
+results.append(
+    dq_check(
+        training,
+        "training_enrolments",
+        "score_range_0_100",
+        "Score must be between 0 and 100 when supplied",
+        col("score_pct").isNotNull() & ((col("score_pct") < 0) | (col("score_pct") > 100)),
+    )
+)
+results.append(
+    dq_check(
+        training,
+        "training_enrolments",
+        "enrolment_date_not_future",
+        "Enrolment date must not be in the future",
+        col("enrolment_date") > current_timestamp().cast("date"),
+    )
+)
+
+import uuid
+from datetime import datetime, timezone
 
 dq_df = spark.createDataFrame(
-    results,
+    [
+        (
+            r["run_id"],
+            r["entity"],
+            r["check_name"],
+            r["description"],
+            r["total_rows"],
+            r["failed_rows"],
+            r["fail_pct"],
+            r["status"],
+            r["severity"],
+        )
+        for r in results
+    ],
     "run_id STRING, entity STRING, check_name STRING, description STRING, total_rows LONG, "
     "failed_rows LONG, fail_pct DECIMAL(5,2), status STRING, severity STRING",
 ).withColumn("run_ts", current_timestamp())
 
-dq_df.write.format("delta").mode("append").saveAsTable("Silver_Lakehouse.dq_log")
+dq_df.write.format("delta").mode("append").saveAsTable(dq_log_table)
 
-if any(row[7] == "FAIL" for row in results):
+if any(r["status"] == "FAIL" for r in results):
     raise Exception("DQ failure detected. Stop downstream Gold processing.")
 
 print("DQ checks complete.")
-
