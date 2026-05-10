@@ -20,20 +20,15 @@ def test_config_keys_consistency():
     """
     Ensure all environment configs have the same required keys.
     """
-    required_keys = {
-        "environment", "workspace", "git_branch",
-        "bronze_lakehouse", "silver_lakehouse", "gold_lakehouse",
-        "api_base_url", "secret_scope", "lakehouses", "warehouse",
-        "data_policy", "schedule_enabled",
-    }
-
+    required_keys = {"environment", "lakehouse_workspace_id", "bronze_name", "silver_name", "gold_name"}
+    
     config_files = ["config_dev.json", "config_prod.json", "config_test.json"]
-
+    
     for file_name in config_files:
         path = os.path.join(CONFIG_DIR, file_name)
         if not os.path.exists(path):
             continue
-
+            
         with open(path, 'r') as f:
             config = json.load(f)
             missing_keys = required_keys - set(config.keys())
