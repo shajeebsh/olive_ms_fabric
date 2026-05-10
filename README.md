@@ -122,7 +122,7 @@ flowchart TD
     ST --> NB_07
     ST --> NB_06 & NB_09
 
-    Config[(config/*.json)] -->|load_config()| NB_01
+    Config[("config/*.json")] -->|load_config()| NB_01
     Config --> NB_02 & NB_03 & NB_04 & NB_05 & NB_06
     Config --> NB_07 & NB_08 & NB_09 & NB_10 & NB_11
 ```
