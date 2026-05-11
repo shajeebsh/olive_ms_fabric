@@ -6,7 +6,7 @@ from pyspark.sql.functions import current_timestamp
 
 from src.config_loader import load_config, lakehouse_table
 
-config = load_config("DEV")
+config = load_config()
 
 control_watermark = lakehouse_table(config, "bronze", "control_watermark")
 dq_log_table = lakehouse_table(config, "silver", "dq_log")

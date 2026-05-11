@@ -7,7 +7,7 @@ from pyspark.sql.types import StringType
 import json
 from src.config_loader import load_config
 
-config = load_config("DEV")
+config = load_config()
 SOURCE_PATH = "Files/raw/profiling/"
 REPORT_PATH = "Files/profiling_reports/"
 

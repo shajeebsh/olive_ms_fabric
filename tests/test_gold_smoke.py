@@ -1,7 +1,7 @@
 import pytest
 from pyspark.sql import SparkSession
 
-from src.config_loader import load_config, lakehouse_table
+from src.config_loader import lakehouse_table, load_config
 
 
 @pytest.fixture(scope="session")
@@ -11,7 +11,7 @@ def spark():
 
 @pytest.fixture(scope="session")
 def config():
-    return load_config("DEV")
+    return load_config()
 
 
 def test_gold_tables_exist(spark, config):

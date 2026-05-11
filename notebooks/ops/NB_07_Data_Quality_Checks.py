@@ -7,7 +7,7 @@ from pyspark.sql.functions import col, current_timestamp
 from src.config_loader import load_config, lakehouse_table
 from src.data_quality import dq_check
 
-config = load_config("DEV")
+config = load_config()
 dq_log_table = lakehouse_table(config, "silver", "dq_log")
 
 results = []

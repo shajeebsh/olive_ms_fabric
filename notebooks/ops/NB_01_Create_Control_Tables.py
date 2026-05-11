@@ -7,7 +7,7 @@ from delta.tables import DeltaTable
 from src.config_loader import load_config, lakehouse_name, lakehouse_table
 from src.filesystem import get_filesystem
 
-config = load_config("DEV")
+config = load_config()
 fs = get_filesystem()
 
 bronze_lh = lakehouse_name(config, "bronze")

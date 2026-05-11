@@ -16,7 +16,7 @@ from src.file_ingestion import (
     move_file,
 )
 
-config = load_config("DEV")
+config = load_config()
 fs = get_filesystem()
 
 FILE_PATTERN = re.compile(

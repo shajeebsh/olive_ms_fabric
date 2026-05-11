@@ -8,7 +8,7 @@ from pyspark.sql.functions import col, current_timestamp
 from src.config_loader import load_config, lakehouse_table
 from src.transformations.silver_training import transform_training_enrolments
 
-config = load_config("DEV")
+config = load_config()
 
 ENTITY = "training_enrolments"
 TARGET_TABLE = lakehouse_table(config, "silver", "silver_training_enrolments")

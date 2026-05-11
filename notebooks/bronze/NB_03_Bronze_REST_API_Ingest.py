@@ -19,7 +19,7 @@ from src.api_ingestion import (
     log_api_call,
 )
 
-config = load_config("DEV")
+config = load_config()
 secrets = get_secrets()
 
 API_CONFIG = {

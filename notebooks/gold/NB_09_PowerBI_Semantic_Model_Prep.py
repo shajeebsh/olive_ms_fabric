@@ -6,7 +6,7 @@ from pyspark.sql.functions import avg, col, count, current_timestamp, round as s
 
 from src.config_loader import load_config, lakehouse_table
 
-config = load_config("DEV")
+config = load_config()
 
 fact_table = lakehouse_table(config, "gold", "fact_training_completion")
 dim_course_table = lakehouse_table(config, "gold", "dim_course")

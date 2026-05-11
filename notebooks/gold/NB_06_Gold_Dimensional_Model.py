@@ -7,7 +7,7 @@ from pyspark.sql.functions import col, current_timestamp
 from src.config_loader import load_config, lakehouse_table
 from src.gold_dimensional import build_dim_student, build_dim_course, build_fact_training_completion
 
-config = load_config("DEV")
+config = load_config()
 
 training = spark.table(lakehouse_table(config, "silver", "silver_training_enrolments")).filter(col("is_current") == True)
 

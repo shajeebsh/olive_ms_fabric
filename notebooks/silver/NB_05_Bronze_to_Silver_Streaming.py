@@ -8,7 +8,7 @@ from pyspark.sql.functions import col
 from src.config_loader import load_config, lakehouse_table
 from src.transformations.silver_training import transform_training_enrolments
 
-config = load_config("DEV")
+config = load_config()
 BRONZE_TABLE = lakehouse_table(config, "bronze", "bronze_lms_enrolments")
 SILVER_TABLE = lakehouse_table(config, "silver", "silver_lms_enrolments")
 

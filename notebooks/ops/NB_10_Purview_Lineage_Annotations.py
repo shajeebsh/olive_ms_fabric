@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from src.config_loader import load_config, lakehouse_table
 
-config = load_config("DEV")
+config = load_config()
 
 TABLE_CATALOGUE = [
     {
