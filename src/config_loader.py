@@ -10,10 +10,21 @@ def load_config(env: str | None = None) -> dict[str, Any]:
     if env is None:
         try:
             from pyspark.sql import SparkSession
+
             spark = SparkSession.builder.getOrCreate()
-            env = spark.conf.get("pipeline.env", "DEV")
+            env = spark.conf.get("pipeline.env", None)
         except Exception:
-            env = os.environ.get("FABRIC_ENVIRONMENT", "DEV")
+            env = None
+
+    if env is None:
+        env = os.environ.get("FABRIC_ENVIRONMENT", None)
+
+    if env is None:
+        raise EnvironmentError(
+            "Environment not set. Pass pipeline.env as a Fabric "
+            "Pipeline parameter, or set the FABRIC_ENVIRONMENT "
+            "environment variable. Valid values: DEV, TEST, PROD"
+        )
 
     filename = f"config_{env.lower()}.json"
     path = os.path.join(_CONFIG_DIR, filename)

@@ -1,25 +1,24 @@
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, current_timestamp, row_number, lit
-from pyspark.sql.window import Window
+from pyspark.sql.functions import (
+    abs as spark_abs, col, current_timestamp, hash as spark_hash, lit,
+)
 
 
 def build_dim_student(training: DataFrame) -> DataFrame:
-    window_spec = Window.orderBy("student_id")
     return (
         training.select("student_id")
         .dropDuplicates()
-        .withColumn("student_key", row_number().over(window_spec))
+        .withColumn("student_key", spark_abs(spark_hash(col("student_id"))))
         .withColumn("is_current", lit(True))
         .withColumn("last_refreshed", current_timestamp())
     )
 
 
 def build_dim_course(training: DataFrame) -> DataFrame:
-    window_spec = Window.orderBy("course_id")
     return (
         training.select("course_id")
         .dropDuplicates()
-        .withColumn("course_key", row_number().over(window_spec))
+        .withColumn("course_key", spark_abs(spark_hash(col("course_id"))))
         .withColumn("is_current", lit(True))
         .withColumn("last_refreshed", current_timestamp())
     )
