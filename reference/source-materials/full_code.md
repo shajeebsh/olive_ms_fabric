@@ -2,6 +2,81 @@
 
 ---
 
+## Repository Structure
+
+```
+olive_ms_fabric/
+├── .gitignore
+├── README.md
+├── requirements-dev.txt
+├── config/
+│   ├── config_dev.json
+│   ├── config_prod.json
+│   └── config_test.json
+├── docs/
+│   ├── architecture/
+│   │   ├── decision-log.md
+│   │   └── medallion-architecture.md
+│   ├── devops/
+│   │   └── git-and-deployment.md
+│   ├── governance/
+│   │   └── purview-rbac-and-privacy.md
+│   ├── implementation/
+│   │   ├── file-ingestion.md
+│   │   ├── roadmap.md
+│   │   └── source-to-target-mapping.md
+│   ├── operations/
+│   │   ├── monitoring-and-alerting.md
+│   │   └── runbook.md
+│   └── templates/
+│       ├── implementation-questions.md
+│       └── weekly-status-template.md
+├── notebooks/
+│   ├── README.md
+│   ├── bronze/
+│   │   ├── NB_00_Data_Profiling.py
+│   │   ├── NB_02_Bronze_Excel_Ingest.py
+│   │   └── NB_03_Bronze_REST_API_Ingest.py
+│   ├── silver/
+│   │   ├── NB_04_Silver_Training_Enrolments.py
+│   │   └── NB_05_Bronze_to_Silver_Streaming.py
+│   ├── gold/
+│   │   ├── NB_06_Gold_Dimensional_Model.py
+│   │   └── NB_09_PowerBI_Semantic_Model_Prep.py
+│   └── ops/
+│       ├── NB_01_Create_Control_Tables.py
+│       ├── NB_07_Data_Quality_Checks.py
+│       ├── NB_08_Monitoring_and_Alerting.py
+│       ├── NB_10_Purview_Lineage_Annotations.py
+│       └── NB_11_Delta_Maintenance.py
+├── pipelines/
+│   └── README.md
+├── reference/
+│   └── source-materials/
+│       ├── full_code.md
+│       ├── fabric_62_questions_v2.html
+│       └── ... (reference docs)
+├── src/
+│   ├── __init__.py
+│   ├── api_ingestion.py
+│   ├── config_loader.py
+│   ├── data_quality.py
+│   ├── file_ingestion.py
+│   ├── filesystem.py
+│   ├── gold_dimensional.py
+│   ├── secrets.py
+│   └── transformations/
+│       ├── __init__.py
+│       └── silver_training.py
+└── tests/
+    ├── README.md
+    ├── test_config.py
+    ├── test_gold_smoke.py
+    └── test_silver_transformations.py
+```
+
+---
+
 ## Configuration Files
 
 ### `config/config_dev.json`
