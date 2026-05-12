@@ -20,7 +20,7 @@ def test_config_keys_consistency():
     """
     Ensure all environment configs have the same required keys.
     """
-    required_keys = {"environment", "lakehouse_workspace_id", "bronze_name", "silver_name", "gold_name"}
+    required_keys = {"environment", "workspace", "bronze_lakehouse", "silver_lakehouse", "gold_lakehouse", "lakehouses"}
     
     config_files = ["config_dev.json", "config_prod.json", "config_test.json"]
     

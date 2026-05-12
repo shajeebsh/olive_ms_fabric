@@ -1,5 +1,6 @@
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import (
+    coalesce,
     col,
     concat_ws,
     current_timestamp,
@@ -13,6 +14,8 @@ from pyspark.sql.functions import (
 
 
 def transform_training_enrolments(df: DataFrame) -> DataFrame:
+    if "_source_system" not in df.columns:
+        df = df.withColumn("_source_system", lit("unknown"))
     return (
         df.withColumn("student_id", upper(trim(col("StudentID"))))
         .withColumn("course_id", upper(trim(col("CourseCode"))))

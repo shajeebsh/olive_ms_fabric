@@ -59,7 +59,7 @@ for api_name, cfg in API_CONFIG.items():
 
     try:
         watermark_row = spark.sql(
-            f"SELECT last_run_ts FROM {control_watermark} WHERE source_system = '{{}}' LIMIT 1".format(api_name)
+            f"SELECT last_run_ts FROM {control_watermark} WHERE source_system = '{api_name}' LIMIT 1"
         ).first()
         watermark_ts = watermark_row["last_run_ts"] if watermark_row else datetime(1900, 1, 1, tzinfo=timezone.utc)
         watermark_value = watermark_ts.isoformat()

@@ -18,28 +18,23 @@ def registry_action(
     spark: SparkSession, config: dict, file_name: str, file_hash: str
 ) -> str:
     registry = lakehouse_table(config, "bronze", "file_ingestion_registry")
+    df_registry = spark.table(registry)
 
-    existing_hash = spark.sql(
-        f"SELECT file_name FROM {registry} WHERE file_hash_md5 = '{{}}' AND status = 'SUCCESS' LIMIT 1".replace(
-            "{}", file_hash
-        )
-    )
+    existing_hash = df_registry.filter(
+        (col("file_hash_md5") == file_hash) & (col("status") == "SUCCESS")
+    ).select("file_name").limit(1)
     if existing_hash.count():
         return "DUPLICATE"
 
-    existing_name = spark.sql(
-        f"SELECT file_name FROM {registry} WHERE file_name = '{{}}' AND status = 'SUCCESS' LIMIT 1".replace(
-            "{}", file_name
-        )
-    )
+    existing_name = df_registry.filter(
+        (col("file_name") == file_name) & (col("status") == "SUCCESS")
+    ).select("file_name").limit(1)
     if existing_name.count():
         return "CORRECTION"
 
-    failed_hash = spark.sql(
-        f"SELECT file_id FROM {registry} WHERE file_hash_md5 = '{{}}' AND status = 'FAILED' LIMIT 1".replace(
-            "{}", file_hash
-        )
-    )
+    failed_hash = df_registry.filter(
+        (col("file_hash_md5") == file_hash) & (col("status") == "FAILED")
+    ).select("file_id").limit(1)
     if failed_hash.count():
         return "RETRY"
 

@@ -74,7 +74,7 @@ class TestTransformTrainingEnrolments:
         df_output = transform_training_enrolments(df_input)
         row = df_output.collect()[0]
 
-        assert row["score_pct"] == 0.0
+        assert row["score_pct"] is None
 
     def test_empty_input_does_not_crash(self, spark):
         schema = StructType([

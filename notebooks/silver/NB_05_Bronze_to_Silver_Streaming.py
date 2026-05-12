@@ -2,11 +2,9 @@
 # Layer: Bronze to Silver
 # Purpose: Micro-batch processing using Delta Change Data Feed.
 
-from delta.tables import DeltaTable
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, current_timestamp, lit
 
 from src.config_loader import load_config, lakehouse_table
-from src.transformations.silver_training import transform_training_enrolments
 
 config = load_config()
 BRONZE_TABLE = lakehouse_table(config, "bronze", "bronze_lms_enrolments")
@@ -16,14 +14,11 @@ SILVER_TABLE = lakehouse_table(config, "silver", "silver_lms_enrolments")
 def transform_to_silver(batch_df, batch_id):
     df_silver = (
         batch_df.filter(col("_change_type").isin("insert", "update_postimage"))
+        .withColumn("_silver_ingested_at", current_timestamp())
+        .withColumn("_stream_batch_id", lit(batch_id))
+        .drop("_change_type", "_commit_version", "_commit_timestamp")
     )
-    df_transformed = transform_training_enrolments(df_silver)
-
-    target = DeltaTable.forName(spark, SILVER_TABLE)
-    target.alias("t").merge(
-        df_transformed.alias("s"),
-        "t.student_id = s.student_id AND t.course_id = s.course_id",
-    ).whenMatchedUpdateAll(condition="t.row_hash <> s.row_hash").whenNotMatchedInsertAll().execute()
+    df_silver.write.format("delta").mode("append").saveAsTable(SILVER_TABLE)
 
 
 df_stream = (

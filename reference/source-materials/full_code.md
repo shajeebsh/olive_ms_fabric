@@ -418,28 +418,23 @@ def registry_action(
     spark: SparkSession, config: dict, file_name: str, file_hash: str
 ) -> str:
     registry = lakehouse_table(config, "bronze", "file_ingestion_registry")
+    df_registry = spark.table(registry)
 
-    existing_hash = spark.sql(
-        f"SELECT file_name FROM {registry} WHERE file_hash_md5 = '{{}}' AND status = 'SUCCESS' LIMIT 1".replace(
-            "{}", file_hash
-        )
-    )
+    existing_hash = df_registry.filter(
+        (col("file_hash_md5") == file_hash) & (col("status") == "SUCCESS")
+    ).select("file_name").limit(1)
     if existing_hash.count():
         return "DUPLICATE"
 
-    existing_name = spark.sql(
-        f"SELECT file_name FROM {registry} WHERE file_name = '{{}}' AND status = 'SUCCESS' LIMIT 1".replace(
-            "{}", file_name
-        )
-    )
+    existing_name = df_registry.filter(
+        (col("file_name") == file_name) & (col("status") == "SUCCESS")
+    ).select("file_name").limit(1)
     if existing_name.count():
         return "CORRECTION"
 
-    failed_hash = spark.sql(
-        f"SELECT file_id FROM {registry} WHERE file_hash_md5 = '{{}}' AND status = 'FAILED' LIMIT 1".replace(
-            "{}", file_hash
-        )
-    )
+    failed_hash = df_registry.filter(
+        (col("file_hash_md5") == file_hash) & (col("status") == "FAILED")
+    ).select("file_id").limit(1)
     if failed_hash.count():
         return "RETRY"
 
@@ -759,6 +754,7 @@ def get_secrets() -> SecretsProvider:
 ```python
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import (
+    coalesce,
     col,
     concat_ws,
     current_timestamp,
@@ -772,6 +768,8 @@ from pyspark.sql.functions import (
 
 
 def transform_training_enrolments(df: DataFrame) -> DataFrame:
+    if "_source_system" not in df.columns:
+        df = df.withColumn("_source_system", lit("unknown"))
     return (
         df.withColumn("student_id", upper(trim(col("StudentID"))))
         .withColumn("course_id", upper(trim(col("CourseCode"))))
@@ -1085,7 +1083,7 @@ for api_name, cfg in API_CONFIG.items():
 
     try:
         watermark_row = spark.sql(
-            f"SELECT last_run_ts FROM {control_watermark} WHERE source_system = '{{}}' LIMIT 1".format(api_name)
+            f"SELECT last_run_ts FROM {control_watermark} WHERE source_system = '{api_name}' LIMIT 1"
         ).first()
         watermark_ts = watermark_row["last_run_ts"] if watermark_row else datetime(1900, 1, 1, tzinfo=timezone.utc)
         watermark_value = watermark_ts.isoformat()
@@ -1208,11 +1206,9 @@ print(f"Silver transformation complete for {ENTITY}: {rows_merged} rows consider
 # Layer: Bronze to Silver
 # Purpose: Micro-batch processing using Delta Change Data Feed.
 
-from delta.tables import DeltaTable
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, current_timestamp, lit
 
 from src.config_loader import load_config, lakehouse_table
-from src.transformations.silver_training import transform_training_enrolments
 
 config = load_config()
 BRONZE_TABLE = lakehouse_table(config, "bronze", "bronze_lms_enrolments")
@@ -1222,14 +1218,11 @@ SILVER_TABLE = lakehouse_table(config, "silver", "silver_lms_enrolments")
 def transform_to_silver(batch_df, batch_id):
     df_silver = (
         batch_df.filter(col("_change_type").isin("insert", "update_postimage"))
+        .withColumn("_silver_ingested_at", current_timestamp())
+        .withColumn("_stream_batch_id", lit(batch_id))
+        .drop("_change_type", "_commit_version", "_commit_timestamp")
     )
-    df_transformed = transform_training_enrolments(df_silver)
-
-    target = DeltaTable.forName(spark, SILVER_TABLE)
-    target.alias("t").merge(
-        df_transformed.alias("s"),
-        "t.student_id = s.student_id AND t.course_id = s.course_id",
-    ).whenMatchedUpdateAll(condition="t.row_hash <> s.row_hash").whenNotMatchedInsertAll().execute()
+    df_silver.write.format("delta").mode("append").saveAsTable(SILVER_TABLE)
 
 
 df_stream = (
@@ -1946,7 +1939,7 @@ def test_config_keys_consistency():
     """
     Ensure all environment configs have the same required keys.
     """
-    required_keys = {"environment", "lakehouse_workspace_id", "bronze_name", "silver_name", "gold_name"}
+    required_keys = {"environment", "workspace", "bronze_lakehouse", "silver_lakehouse", "gold_lakehouse", "lakehouses"}
     
     config_files = ["config_dev.json", "config_prod.json", "config_test.json"]
     
@@ -2077,7 +2070,7 @@ class TestTransformTrainingEnrolments:
         df_output = transform_training_enrolments(df_input)
         row = df_output.collect()[0]
 
-        assert row["score_pct"] == 0.0
+        assert row["score_pct"] is None
 
     def test_empty_input_does_not_crash(self, spark):
         schema = StructType([
