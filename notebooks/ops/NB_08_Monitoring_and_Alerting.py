@@ -4,11 +4,21 @@
 
 from pyspark.sql.functions import current_timestamp
 
+from src.config_loader import load_config, lakehouse_table
+
+config = load_config()
+
+control_watermark = lakehouse_table(config, "bronze", "control_watermark")
+dq_log_table = lakehouse_table(config, "silver", "dq_log")
+api_call_log = lakehouse_table(config, "bronze", "api_call_log")
+file_ingestion_registry = lakehouse_table(config, "bronze", "file_ingestion_registry")
+monitoring_alerts = lakehouse_table(config, "silver", "monitoring_alerts")
+
 alerts = []
 
-freshness = spark.sql("""
+freshness = spark.sql(f"""
     SELECT source_system, last_run_ts
-    FROM Bronze_Lakehouse.control_watermark
+    FROM {control_watermark}
     WHERE last_run_ts < current_timestamp() - INTERVAL 26 HOURS
 """)
 
@@ -23,9 +33,9 @@ for row in freshness.collect():
         "OPEN",
     ))
 
-dq_failures = spark.sql("""
+dq_failures = spark.sql(f"""
     SELECT entity, check_name, fail_pct
-    FROM Silver_Lakehouse.dq_log
+    FROM {dq_log_table}
     WHERE status = 'FAIL'
       AND run_ts >= current_timestamp() - INTERVAL 30 MINUTES
 """)
@@ -41,12 +51,12 @@ for row in dq_failures.collect():
         "OPEN",
     ))
 
-api_health = spark.sql("""
+api_health = spark.sql(f"""
     SELECT api_name,
            sum(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) AS failures,
            sum(CASE WHEN status = 'RATE_LIMITED' THEN 1 ELSE 0 END) AS rate_limits,
            round(avg(response_ms), 0) AS avg_response_ms
-    FROM Bronze_Lakehouse.api_call_log
+    FROM {api_call_log}
     WHERE called_at >= current_timestamp() - INTERVAL 24 HOURS
     GROUP BY api_name
 """)
@@ -83,9 +93,9 @@ for row in api_health.collect():
             "OPEN",
         ))
 
-file_health = spark.sql("""
+file_health = spark.sql(f"""
     SELECT source_system, status, count(*) AS file_count
-    FROM Bronze_Lakehouse.file_ingestion_registry
+    FROM {file_ingestion_registry}
     WHERE cast(detected_at AS DATE) = current_date()
     GROUP BY source_system, status
 """)
@@ -117,7 +127,7 @@ if alerts:
         alerts,
         "alert_type STRING, entity STRING, severity STRING, message STRING, value DOUBLE, threshold DOUBLE, status STRING",
     ).withColumn("alert_ts", current_timestamp()).withColumn("run_ts", current_timestamp())
-    alert_df.write.format("delta").mode("append").saveAsTable("Silver_Lakehouse.monitoring_alerts")
+    alert_df.write.format("delta").mode("append").saveAsTable(monitoring_alerts)
     print(f"Raised {len(alerts)} alerts.")
 else:
     print("No alerts raised.")

@@ -4,23 +4,31 @@
 
 from pyspark.sql.functions import avg, col, count, current_timestamp, round as spark_round, sum as spark_sum, when
 
-summary = spark.sql("""
+from src.config_loader import load_config, lakehouse_table
+
+config = load_config()
+
+fact_table = lakehouse_table(config, "gold", "fact_training_completion")
+dim_course_table = lakehouse_table(config, "gold", "dim_course")
+vw_summary = lakehouse_table(config, "gold", "vw_training_summary")
+file_ingestion_summary_table = lakehouse_table(config, "gold", "vw_file_ingestion_summary")
+file_ingestion_registry = lakehouse_table(config, "bronze", "file_ingestion_registry")
+
+summary = spark.sql(f"""
     SELECT
         c.course_id,
         count(*) AS total_enrolments,
         sum(CASE WHEN f.is_completed THEN 1 ELSE 0 END) AS completed_count,
         round(avg(f.score_pct), 2) AS avg_score,
         round(sum(CASE WHEN f.is_completed THEN 1.0 ELSE 0 END) / count(*) * 100, 2) AS completion_rate_pct
-    FROM Gold_Lakehouse.fact_training_completion f
-    LEFT JOIN Gold_Lakehouse.dim_course c ON f.course_key = c.course_key
+    FROM {fact_table} f
+    LEFT JOIN {dim_course_table} c ON f.course_key = c.course_key
     GROUP BY c.course_id
 """).withColumn("last_refreshed", current_timestamp())
 
-summary.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-    "Gold_Lakehouse.vw_training_summary"
-)
+summary.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(vw_summary)
 
-file_ingestion_summary = spark.sql("""
+file_ingestion_summary = spark.sql(f"""
     SELECT
         cast(detected_at AS DATE) AS load_date,
         source_system,
@@ -28,21 +36,21 @@ file_ingestion_summary = spark.sql("""
         count(*) AS file_count,
         sum(row_count) AS total_rows,
         max(detected_at) AS last_seen
-    FROM Bronze_Lakehouse.file_ingestion_registry
+    FROM {file_ingestion_registry}
     WHERE cast(detected_at AS DATE) >= current_date() - 30
     GROUP BY cast(detected_at AS DATE), source_system, status
 """)
 
 file_ingestion_summary.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-    "Gold_Lakehouse.vw_file_ingestion_summary"
+    file_ingestion_summary_table
 )
 
 required_tables = [
-    "Gold_Lakehouse.dim_student",
-    "Gold_Lakehouse.dim_course",
-    "Gold_Lakehouse.fact_training_completion",
-    "Gold_Lakehouse.vw_training_summary",
-    "Gold_Lakehouse.vw_file_ingestion_summary",
+    lakehouse_table(config, "gold", "dim_student"),
+    lakehouse_table(config, "gold", "dim_course"),
+    lakehouse_table(config, "gold", "fact_training_completion"),
+    vw_summary,
+    file_ingestion_summary_table,
 ]
 
 for table_name in required_tables:

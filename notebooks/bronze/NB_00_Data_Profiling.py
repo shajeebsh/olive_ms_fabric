@@ -5,7 +5,9 @@
 from pyspark.sql.functions import col, count, when, countDistinct
 from pyspark.sql.types import StringType
 import json
+from src.config_loader import load_config
 
+config = load_config()
 SOURCE_PATH = "Files/raw/profiling/"
 REPORT_PATH = "Files/profiling_reports/"
 
@@ -65,4 +67,3 @@ report = {
 spark.sparkContext.parallelize([json.dumps(report, indent=2)]).saveAsTextFile(
     f"{REPORT_PATH}profile_{spark._sc.applicationId}"
 )
-

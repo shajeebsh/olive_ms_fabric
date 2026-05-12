@@ -2,46 +2,28 @@
 # Layer: Gold
 # Purpose: Build starter Gold dimensions and facts.
 
-from pyspark.sql.functions import col, current_timestamp, monotonically_increasing_id, year, month, dayofmonth, quarter, to_date
+from pyspark.sql.functions import col, current_timestamp
 
-training = spark.table("Silver_Lakehouse.silver_training_enrolments").filter(col("is_current") == True)
+from src.config_loader import load_config, lakehouse_table
+from src.gold_dimensional import build_dim_student, build_dim_course, build_fact_training_completion
 
-dim_student = (
-    training.select("student_id")
-    .dropDuplicates()
-    .withColumn("student_key", monotonically_increasing_id())
-    .withColumn("is_current", col("student_id").isNotNull())
-    .withColumn("last_refreshed", current_timestamp())
+config = load_config()
+
+training = spark.table(lakehouse_table(config, "silver", "silver_training_enrolments")).filter(col("is_current") == True)
+
+dim_student = build_dim_student(training)
+dim_student.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
+    lakehouse_table(config, "gold", "dim_student")
 )
-dim_student.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("Gold_Lakehouse.dim_student")
 
-dim_course = (
-    training.select("course_id")
-    .dropDuplicates()
-    .withColumn("course_key", monotonically_increasing_id())
-    .withColumn("is_current", col("course_id").isNotNull())
-    .withColumn("last_refreshed", current_timestamp())
+dim_course = build_dim_course(training)
+dim_course.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
+    lakehouse_table(config, "gold", "dim_course")
 )
-dim_course.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable("Gold_Lakehouse.dim_course")
 
-fact_training_completion = (
-    training.alias("f")
-    .join(dim_student.alias("s"), "student_id", "left")
-    .join(dim_course.alias("c"), "course_id", "left")
-    .select(
-        col("s.student_key"),
-        col("c.course_key"),
-        col("f.enrolment_date"),
-        col("f.completion_date"),
-        col("f.score_pct"),
-        col("f.is_completed"),
-        col("f.enrolment_status"),
-    )
-    .withColumn("last_refreshed", current_timestamp())
-)
+fact_training_completion = build_fact_training_completion(training, dim_student, dim_course)
 fact_training_completion.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-    "Gold_Lakehouse.fact_training_completion"
+    lakehouse_table(config, "gold", "fact_training_completion")
 )
 
 print("Gold starter model complete.")
-
