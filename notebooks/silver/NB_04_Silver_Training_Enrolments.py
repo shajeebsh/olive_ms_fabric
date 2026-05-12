@@ -31,17 +31,26 @@ if not spark.catalog.tableExists(TARGET_TABLE):
     df_silver.write.format("delta").mode("overwrite").saveAsTable(TARGET_TABLE)
 else:
     target = DeltaTable.forName(spark, TARGET_TABLE)
+
     target.alias("t").merge(
         df_silver.alias("s"),
-        "t.student_id = s.student_id AND t.course_id = s.course_id AND t.is_current = true",
-    ).whenMatchedUpdate(
-        condition="t.row_hash <> s.row_hash",
-        set={
-            "valid_to": "current_timestamp()",
-            "is_current": "false",
-            "_silver_updated": "current_timestamp()",
-        },
-    ).whenNotMatchedInsertAll().execute()
+        "t.student_id = s.student_id "
+        "AND t.course_id = s.course_id "
+        "AND t.is_current = true "
+        "AND t.row_hash <> s.row_hash",
+    ).whenMatchedUpdate(set={
+        "valid_to": "current_timestamp()",
+        "is_current": "false",
+        "_silver_updated": "current_timestamp()",
+    }).execute()
+
+    df_to_insert = df_silver.alias("s").join(
+        spark.table(TARGET_TABLE).filter("is_current = true").alias("t"),
+        (col("s.student_id") == col("t.student_id")) &
+        (col("s.course_id") == col("t.course_id")),
+        "left_anti"
+    )
+    df_to_insert.write.format("delta").mode("append").saveAsTable(TARGET_TABLE)
 
 rows_merged = df_silver.count()
 
