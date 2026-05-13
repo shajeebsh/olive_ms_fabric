@@ -1,0 +1,397 @@
+
+<h2 class="sr-only">Complete guide to working effectively in a multi-person team on the PwC university data platform project, covering team structure, task allocation, Git workflow, communication, and day one priorities.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:1rem 0 1.25rem}
+.tab{padding:5px 14px;border-radius:20px;border:0.5px solid var(--color-border-secondary);font-size:12px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:10px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px}
+.card-body{font-size:12px;color:var(--color-text-secondary);line-height:1.7}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 8px}
+.step-row{display:grid;grid-template-columns:28px 1fr;gap:10px;margin-bottom:12px;align-items:start}
+.step-num{width:28px;height:28px;border-radius:50%;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.s-blue{background:#E6F1FB;color:#0C447C}
+.s-green{background:#EAF3DE;color:#27500A}
+.s-amber{background:#FAEEDA;color:#633806}
+.s-purple{background:#EDE9FE;color:#3C3489}
+.s-teal{background:#E1F5EE;color:#085041}
+.step-content{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.step-title{font-weight:500;color:var(--color-text-primary);display:block;margin-bottom:2px}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.b-blue{background:#E6F1FB;color:#0C447C}
+.b-green{background:#EAF3DE;color:#27500A}
+.b-amber{background:#FAEEDA;color:#633806}
+.b-purple{background:#EDE9FE;color:#3C3489}
+.b-teal{background:#E1F5EE;color:#085041}
+.b-red{background:#FCEBEB;color:#791F1F}
+.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-info);line-height:1.6;margin:10px 0}
+.warn-box{background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin:10px 0}
+.success-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-success);line-height:1.6;margin:10px 0}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.role-card{border-radius:var(--border-radius-md);padding:12px;border:0.5px solid var(--color-border-tertiary)}
+.role-title{font-size:13px;font-weight:500;margin-bottom:4px}
+.role-body{font-size:12px;color:var(--color-text-secondary);line-height:1.6}
+.code{font-family:var(--font-mono);font-size:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;margin:6px 0;line-height:1.9;white-space:pre-wrap;border:0.5px solid var(--color-border-tertiary)}
+.day1-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:var(--border-radius-md);background:var(--color-background-secondary);margin-bottom:6px;cursor:pointer;transition:all .15s}
+.day1-item:hover{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary)}
+.day1-item.done{background:var(--color-background-success)}
+.day1-check{width:18px;height:18px;border-radius:4px;border:0.5px solid var(--color-border-secondary);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent}
+.day1-item.done .day1-check{background:var(--color-background-success);border-color:var(--color-border-success);color:var(--color-text-success)}
+.day1-text{font-size:13px;color:var(--color-text-secondary);line-height:1.5;flex:1}
+.day1-item.done .day1-text{color:var(--color-text-success)}
+.day1-time{font-size:11px;color:var(--color-text-tertiary);flex-shrink:0;margin-top:2px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px;text-align:center}
+.stat-n{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.stat-l{font-size:11px;color:var(--color-text-secondary);margin-top:3px}
+.do-dont{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.do-box{background:var(--color-background-success);border:0.5px solid var(--color-border-success);border-radius:var(--border-radius-md);padding:12px}
+.dont-box{background:var(--color-background-danger);border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-md);padding:12px}
+.box-title{font-size:12px;font-weight:500;margin-bottom:8px}
+.do-box .box-title{color:var(--color-text-success)}
+.dont-box .box-title{color:var(--color-text-danger)}
+li.di{font-size:12px;color:var(--color-text-secondary);line-height:1.8;list-style:none;padding-left:14px;position:relative}
+li.di::before{position:absolute;left:0;font-size:11px}
+.do-box li.di::before{content:"✓";color:var(--color-text-success)}
+.dont-box li.di::before{content:"✗";color:var(--color-text-danger)}
+.progress-bar{height:6px;border-radius:3px;background:var(--color-background-secondary);margin-top:8px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--color-text-info);transition:width .3s}
+</style>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('day1',this)">Day one priorities</div>
+  <div class="tab" onclick="show('team',this)">Team structure</div>
+  <div class="tab" onclick="show('split',this)">How to split the work</div>
+  <div class="tab" onclick="show('git',this)">Git team workflow</div>
+  <div class="tab" onclick="show('meetings',this)">Meetings & communication</div>
+  <div class="tab" onclick="show('leader',this)">Leading as a contractor</div>
+</div>
+
+<!-- TAB 1: DAY ONE -->
+<div id="day1" class="panel active">
+  <div class="section-label">Your day one goal — listen, map, and observe. Do not build anything yet.</div>
+  <div class="card">
+    <div class="card-title">The single most important thing on day one</div>
+    <div class="card-body">You already know more about this project technically than almost anyone in that office. That is not the risk. The risk is coming in with solutions before you understand the people, the politics, and the context. Spend day one understanding the landscape, not demonstrating your knowledge. Your moment to shine will come in week two when you present your first findings.</div>
+  </div>
+
+  <div class="section-label">Day one checklist — click to mark done</div>
+  <div id="checklist"></div>
+  <div style="font-size:12px;color:var(--color-text-secondary);margin-top:8px">Done: <span id="done-n">0</span> / <span id="total-n">0</span><div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div></div>
+
+  <div class="section-label">The five questions to answer by end of day one</div>
+  <div class="step-row">
+    <div class="step-num s-blue">1</div>
+    <div class="step-content"><span class="step-title">Who is my daily contact — manager or lead?</span>The person you report progress to, ask for unblocking, and send the Friday status report to. Confirm their name, Teams handle, and preferred communication style today.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">2</div>
+    <div class="step-content"><span class="step-title">Who are the other people on this project?</span>Names, roles, skills, and which part of the project they are covering. Draw a simple mental map — you need to know who to ask for what.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">3</div>
+    <div class="step-content"><span class="step-title">What has already been started or decided?</span>Any previous work, existing infrastructure, decisions already made. You do not want to propose something that was already tried and rejected six months ago.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">4</div>
+    <div class="step-content"><span class="step-title">What is the most urgent deliverable right now?</span>The thing the manager or client is waiting for. Align your first week's work to that, not to what you think is most interesting technically.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">5</div>
+    <div class="step-content"><span class="step-title">What does the university client expect to see first?</span>Their first impression of the project will be shaped by whatever you show them first. Know what that is before you start building.</div>
+  </div>
+</div>
+
+<!-- TAB 2: TEAM STRUCTURE -->
+<div id="team" class="panel">
+  <div class="section-label">Map the team before you assign any work</div>
+  <div class="card">
+    <div class="card-title">Every person on the project has a different skill level, context, and motivation</div>
+    <div class="card-body">Before splitting work, spend your first two days understanding each person. A junior analyst given a task that is too hard will go quiet and miss the deadline. A senior person given something too basic will disengage. Your job as the technical lead is to match the task difficulty to the person's capability and give them enough context to succeed independently.</div>
+  </div>
+
+  <div class="section-label">Typical roles you might find on a PwC data project</div>
+  <div class="role-grid">
+    <div class="role-card" style="border-color:#B5D4F4">
+      <div class="role-title" style="color:#0C447C">PwC Engagement Manager</div>
+      <div class="role-body">Owns the client relationship and commercial delivery. Not technical. Needs a weekly status summary, risk flags, and to look good in front of the university. Give them a one-page update every Friday — they will use it verbatim with the client.</div>
+    </div>
+    <div class="role-card" style="border-color:#C0DD97">
+      <div class="role-title" style="color:#27500A">Data Lead / Senior Engineer</div>
+      <div class="role-body">Your closest collaborator. Probably has broader PwC context you lack. Respect their decisions in front of the client even if you disagree — resolve differences privately. Make them look good and they will protect you.</div>
+    </div>
+    <div class="role-card" style="border-color:#FAC775">
+      <div class="role-title" style="color:#633806">Mid-level analyst / engineer</div>
+      <div class="role-body">Can own a specific layer or pipeline independently if given clear specs. Assign them Bronze ingestion or Silver transformations with the STTM document as their reference. Check in daily, not hourly — give autonomy but stay available.</div>
+    </div>
+    <div class="role-card" style="border-color:#CECBF6">
+      <div class="role-title" style="color:#3C3489">Junior analyst</div>
+      <div class="role-body">Best used for data profiling, documentation, testing, and STTM updates. Do not give them production pipeline work without a senior reviewer. Pair them with a mid-level person for the first two weeks so they learn the patterns before working alone.</div>
+    </div>
+    <div class="role-card" style="border-color:#9FE1CB">
+      <div class="role-title" style="color:#085041">University IT contact</div>
+      <div class="role-body">Not PwC staff but critical. They control SharePoint access, API credentials, and network firewall approvals. Identify them on day one and build a good relationship. Every blocked task eventually traces back to waiting for something from IT.</div>
+    </div>
+    <div class="role-card" style="border-color:#F5C4B3">
+      <div class="role-title" style="color:#712B13">University data steward / DPO</div>
+      <div class="role-body">The governance gatekeeper. Needs to sign off on sensitivity labels, RBAC changes, and the GDPR evidence package. Brief them early — a late surprise from the DPO can delay PROD deployment by weeks.</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: SPLIT THE WORK -->
+<div id="split" class="panel">
+  <div class="section-label">Split work by Medallion layer — each layer is a natural ownership boundary</div>
+  <div class="info-box">The three-Lakehouse architecture gives you a clean way to divide work. Bronze, Silver, and Gold can each be owned by a different person or pair. They are loosely coupled — as long as the schema contract between layers is agreed upfront, people can work in parallel without stepping on each other.</div>
+
+  <div class="section-label">Recommended work split for a 3–4 person team</div>
+  <div class="step-row">
+    <div class="step-num s-amber">You</div>
+    <div class="step-content">
+      <span class="step-title">Overall architecture + Gold layer + stakeholder management</span>
+      You own the technical direction, the config/Git structure, the Gold dimensional model, and the Power BI semantic model. You are also the one in stakeholder meetings translating business needs into data design. You review every PR before it merges to develop.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">P2</div>
+    <div class="step-content">
+      <span class="step-title">Mid-level engineer → Silver transformation layer</span>
+      Owns NB_04, NB_05 streaming, and the Silver DQ framework (NB_07). Give them the STTM document and the silver_training.py transformer as their starting point. Their definition of done: Silver tables pass all DQ checks with >95% quality score.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-green">P3</div>
+    <div class="step-content">
+      <span class="step-title">Mid-level engineer → Bronze ingestion layer</span>
+      Owns NB_02 Excel ingestion, NB_03 REST API, and the file_ingestion_registry. Give them the codebase repo and the file ingestion design doc. Their definition of done: all five Excel sources and both REST APIs loading to Bronze with zero manual intervention.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-purple">P4</div>
+    <div class="step-content">
+      <span class="step-title">Junior analyst → data profiling, documentation, testing</span>
+      Owns NB_00 profiling runs, STTM documentation updates, test writing in tests/, and the weekly reconciliation report. This work is critical but well-defined — perfect for someone building confidence. Pair them with P3 for the first week.
+    </div>
+  </div>
+
+  <div class="section-label">The schema contract — agree this before anyone writes a line of code</div>
+  <div class="card">
+    <div class="card-title">The interface between Bronze and Silver must be agreed on day two</div>
+    <div class="card-body">Bronze engineer and Silver engineer need to agree the Bronze table schema before either writes production code. The Bronze engineer writes the column names and data types. The Silver engineer agrees to transform from exactly those names. If they build in parallel without this, you get a schema mismatch that only surfaces in production. Hold a 30-minute alignment session: "Bronze produces these columns in these types — Silver takes them and produces these output columns." Write it in the STTM. Done.</div>
+  </div>
+
+  <div class="section-label">Parallel work is only safe if dependencies are clear</div>
+  <div class="code">Week 1-2: Everyone can work in parallel on their layer in DEV
+  P3 → Bronze ingestion (DEV only, synthetic data)
+  P2 → Silver transformation (DEV only, reads from P3's Bronze tables)
+  P4 → Data profiling + STTM documentation
+  You → Architecture, config setup, Gold skeleton, stakeholder meetings
+
+Week 3-4: P3 Bronze must be complete before P2 Silver can be finalised
+  P3 Bronze PR reviewed and merged to develop
+  P2 Silver can now test against real Bronze output
+  P4 writes tests for P2's Silver transformations
+  You → Gold dimensional model, Power BI prototype
+
+Week 5+: Gold depends on Silver being stable
+  P2 Silver DQ checks passing >95%
+  You → Build Gold on top of stable Silver
+  P3 → REST API ingestion completion + monitoring notebooks
+  P4 → UAT support, reconciliation reports</div>
+</div>
+
+<!-- TAB 4: GIT TEAM WORKFLOW -->
+<div id="git" class="panel">
+  <div class="section-label">With multiple people, Git discipline is the difference between smooth delivery and chaos</div>
+
+  <div class="card">
+    <div class="card-title">One rule that prevents 90% of team Git problems</div>
+    <div class="card-body">Nobody commits directly to develop or main. Every change — including a two-line fix — goes through a feature branch and a Pull Request. This sounds slow but it is faster overall because you catch problems before they block the whole team. A broken notebook merged directly to develop blocks everyone working in TEST.</div>
+  </div>
+
+  <div class="section-label">Branch naming convention — enforce this from day one</div>
+  <div class="code">feature/UNIV-{ticket-number}-{short-description}
+
+Examples:
+  feature/UNIV-01-bronze-excel-ingest
+  feature/UNIV-02-silver-training-transform
+  feature/UNIV-03-gold-dim-student
+  feature/UNIV-04-dq-checks-framework
+  bugfix/UNIV-15-silver-scd2-second-pass
+  hotfix/UNIV-22-prod-watermark-stuck</div>
+
+  <div class="section-label">PR review rules — establish these before first PR is raised</div>
+  <div class="step-row">
+    <div class="step-num s-blue">R1</div>
+    <div class="step-content"><span class="step-title">Every PR needs at least one reviewer who did not write it</span>Junior PRs reviewed by mid-level or senior. Mid-level PRs reviewed by you or the data lead. PRs to main require your sign-off plus the PwC manager's approval.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">R2</div>
+    <div class="step-content"><span class="step-title">PR description must include: what changed, why, how to test it</span>Create a PR template in Azure DevOps so this is enforced. A PR with only a title and no description does not get reviewed — it gets returned to the author.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">R3</div>
+    <div class="step-content"><span class="step-title">DQ checks must pass before any Silver PR merges</span>Run NB_07 in DEV against the feature branch output. Attach the DQ scorecard screenshot to the PR. If quality score is below 90%, the PR does not merge.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-blue">R4</div>
+    <div class="step-content"><span class="step-title">Resolve PR comments within 24 hours</span>A PR that sits unreviewed for 3 days blocks the person who raised it. Set a team norm: PRs get reviewed within one business day, and authors address comments within one business day of receiving them.</div>
+  </div>
+
+  <div class="section-label">Conflict prevention — the most common team Git problems</div>
+  <div class="do-dont">
+    <div class="do-box">
+      <div class="box-title">Prevents conflicts</div>
+      <ul>
+        <li class="di">Each person owns their own notebook files</li>
+        <li class="di">Shared src/ files get a named owner who reviews all changes</li>
+        <li class="di">config/*.json only edited by you (architecture decisions)</li>
+        <li class="di">Rebase feature branches on develop daily if they diverge</li>
+        <li class="di">Short-lived branches — merge within 3 days of opening</li>
+      </ul>
+    </div>
+    <div class="dont-box">
+      <div class="box-title">Creates conflicts</div>
+      <ul>
+        <li class="di">Two people editing silver_training.py simultaneously</li>
+        <li class="di">Long-running branches open for 2+ weeks</li>
+        <li class="di">Force-pushing to develop or main</li>
+        <li class="di">Merging without running the notebooks first</li>
+        <li class="di">Resolving merge conflicts without telling the original author</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: MEETINGS -->
+<div id="meetings" class="panel">
+  <div class="section-label">The meeting cadence that keeps a multi-person data team aligned</div>
+
+  <div class="step-row">
+    <div class="step-num s-blue">Daily</div>
+    <div class="step-content">
+      <span class="step-title">15-minute standup — 09:15 every morning</span>
+      Three questions only: what did I complete yesterday, what am I doing today, is anything blocking me. No problem-solving in standup — blockers get a separate conversation after. Keep it to 15 minutes or people stop attending. You run this as technical lead.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-green">Weekly</div>
+    <div class="step-content">
+      <span class="step-title">45-minute team sync — Wednesday 14:00</span>
+      Review the sprint board together. Discuss any cross-layer dependencies surfacing. Demo any working prototype from the week. Raise scope change requests before they become assumptions. This is the meeting where you catch drift before it becomes a problem.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-amber">Weekly</div>
+    <div class="step-content">
+      <span class="step-title">Friday status report to manager — 16:30</span>
+      You write this and send it. It covers the whole team's output, not just yours. This is the single most visible thing you do all week. Make it crisp: completed, in progress, next week, blockers. Include one metric — "DQ quality score this week: 97%" — something the manager can quote to their engagement lead.
+    </div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-purple">Bi-weekly</div>
+    <div class="step-content">
+      <span class="step-title">University stakeholder update — alternate Thursdays</span>
+      Show progress to the university team. Never show raw data or Bronze layer outputs. Always show a working dashboard or prototype, even if on synthetic data. End with three specific questions for them — "does this training completion view match your mental model?" — so they feel ownership over the direction.
+    </div>
+  </div>
+
+  <div class="section-label">Communication rules for a distributed team</div>
+  <div class="card">
+    <div class="card-title">Everything important goes in writing — no verbal-only decisions</div>
+    <div class="card-body">If a decision is made in a meeting, one person writes a summary in the Teams channel within an hour. "We agreed to use watermark CDC for the REST API rather than polling every 5 minutes because of rate limit concerns — confirmed by [manager name] at 14:30 today." This protects everyone. A decision that was only verbal does not exist.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Use channels, not DMs, for project decisions</div>
+    <div class="card-body">When you ask a question or share a finding in a Teams DM, only one person sees it. When you post it in the project channel, the whole team benefits. Reserve DMs for sensitive conversations (personal feedback, concerns about a colleague) — everything else is in the open channel so knowledge stays with the project, not with individuals.</div>
+  </div>
+</div>
+
+<!-- TAB 6: LEADING AS A CONTRACTOR -->
+<div id="leader" class="panel">
+  <div class="section-label">You are a contractor, not a permanent staff member — this changes how you lead</div>
+
+  <div class="card">
+    <div class="card-title">Your authority comes from technical credibility, not from hierarchy</div>
+    <div class="card-body">You cannot tell a PwC employee what to do. What you can do is make recommendations so clearly reasoned that following them is the obvious choice. When you say "I recommend we use the watermark CDC pattern instead of full reload because..." and you explain the tradeoff clearly, people follow that not because you outrank them but because the reasoning is sound. Build your influence through expertise and reliability, not through assertiveness.</div>
+  </div>
+
+  <div class="section-label">Specific leadership behaviours that work in a consulting team</div>
+
+  <div class="step-row">
+    <div class="step-num s-teal">1</div>
+    <div class="step-content"><span class="step-title">Unblock people before they ask</span>Check in with each team member daily in standup. If someone says they are waiting for an API credential, offer to escalate it with the IT contact on their behalf. Removing blockers is the highest-value thing a technical lead does on a consulting project.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-teal">2</div>
+    <div class="step-content"><span class="step-title">Give credit publicly, give feedback privately</span>In the Friday status report: "This week P3 completed the Bronze Excel ingestion ahead of schedule." In the standup: never correct someone's approach in front of the group. Pull them aside for a 5-minute conversation instead.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-teal">3</div>
+    <div class="step-content"><span class="step-title">Write the architecture decisions — do not just say them</span>Every technical decision you make should be in the architecture_decision_log.md within 24 hours. This protects you ("we agreed to use three Lakehouses for isolation — see ADR-04") and teaches the rest of the team the reasoning behind choices they inherit.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-teal">4</div>
+    <div class="step-content"><span class="step-title">Share knowledge deliberately, not accidentally</span>When you solve a tricky problem — a PySpark SCD2 issue, a Delta streaming checkpoint fix — write a short note in the Teams channel explaining what the problem was and how you solved it. This builds your reputation and raises the whole team's capability. The junior analyst reading that note today will solve the same problem independently in six months.</div>
+  </div>
+  <div class="step-row">
+    <div class="step-num s-teal">5</div>
+    <div class="step-content"><span class="step-title">Protect your team from scope creep, not just yourself</span>When the university asks for something new mid-sprint, your job is to log it, size it, and bring it to the manager for a scope conversation — before anyone on the team starts building it. Junior engineers say yes to everything because they want to be helpful. You protect them from that by being the person who says "that's a great idea, let us capture it and assess it properly."</div>
+  </div>
+
+  <div class="success-box">The difference between a good contractor and a great one is not technical skill — it is how they make the people around them better. If the team ships more because of how you organised and supported them, that is the kind of reputation that gets you extended, recommended, and brought back on future engagements.</div>
+
+  <div class="section-label">The question to ask yourself every morning</div>
+  <div class="card">
+    <div class="card-body" style="font-size:14px;font-style:italic;color:var(--color-text-primary);line-height:1.7">"What is the one thing I can do today that would make the biggest difference to the project — and am I doing that thing, or something easier?"</div>
+  </div>
+</div>
+
+<script>
+const CHECKS = [
+  {time:"08:30", text:"Arrive 10 minutes early. Set up your laptop and be ready when others arrive."},
+  {time:"09:00", text:"Introduce yourself to every person on the team — name, role, and one sentence on your background."},
+  {time:"09:30", text:"Ask the manager: who are all the people involved in this project and what are their roles?"},
+  {time:"10:00", text:"Ask for access: Azure DevOps repo, Fabric workspace, Teams channel, JIRA/Confluence."},
+  {time:"10:30", text:"Ask to see any existing project documents — previous work, architecture diagrams, data inventory."},
+  {time:"11:00", text:"Find out: what is the most urgent deliverable right now and when is it expected?"},
+  {time:"12:30", text:"Lunch with a team member if possible — relationship-building matters as much as technical skill."},
+  {time:"14:00", text:"Map the university stakeholders: who are the doctors, training managers, IT contact, DPO?"},
+  {time:"15:00", text:"Identify any blockers already known: missing credentials, pending access, unclear requirements."},
+  {time:"16:00", text:"Write your day one notes: what you learned, open questions, first impressions of the project state."},
+  {time:"16:30", text:"Message the manager: 'Thanks for the welcome today — here are my initial observations and my plan for tomorrow.' (2-3 bullet points only)"},
+];
+
+function buildChecklist(){
+  const el = document.getElementById('checklist');
+  document.getElementById('total-n').textContent = CHECKS.length;
+  CHECKS.forEach((c,i)=>{
+    const div = document.createElement('div');
+    div.className = 'day1-item';
+    div.id = 'ci'+i;
+    div.onclick = ()=>toggleCheck(i);
+    div.innerHTML = `<div class="day1-check">✓</div><div class="day1-text">${c.text}</div><div class="day1-time">${c.time}</div>`;
+    el.appendChild(div);
+  });
+}
+
+const checked = {};
+function toggleCheck(i){
+  checked[i] = !checked[i];
+  document.getElementById('ci'+i).classList.toggle('done', checked[i]);
+  const done = Object.values(checked).filter(Boolean).length;
+  document.getElementById('done-n').textContent = done;
+  document.getElementById('prog').style.width = (done/CHECKS.length*100)+'%';
+}
+
+function show(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+buildChecklist();
+</script>
