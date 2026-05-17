@@ -1,0 +1,35 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Pytest Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-sv"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "FABRIC_ENVIRONMENT": "DEV"
+            }
+        },
+        {
+            "name": "Python Debugger: Pytest All Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "tests/",
+                "-sv"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "FABRIC_ENVIRONMENT": "DEV"
+            }
+        }
+    ]
+}
