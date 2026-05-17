@@ -168,3 +168,91 @@ You are a contractor, not a permanent staff member — this changes how you lead
 ### The Question to Ask Yourself Every Morning
 
 > "What is the one thing I can do today that would make the biggest difference to the project — and am I doing that thing, or something easier?"
+
+---
+
+# System Integration & Enterprise Data Management
+
+## Goal
+Establish an enterprise-wide data management framework for NUH that integrates all source systems into a governed, ML-ready data platform following the medallion architecture (Bronze → Silver → Gold).
+
+## Scope
+
+**In Scope:**
+- Data ingestion from 12 source system types (Microsoft Dynamics, Excel, REST API, SOAP, CSV, webhooks, AWS DataHub, AWS HubSpot, Ghost Inspector, TLMF User Portal, Social Media, MailChimp)
+- Enterprise data management across 7 capability areas: Design, Recruit, Apply, Enrol, Manage Members & Fellows, Manage Enquiries, Manage Records & Info
+- Medallion architecture implementation (Bronze/Silver/Gold layers)
+- Data governance framework
+- ML-ready data pipeline preparation
+
+**Out of Scope:**
+- Direct system-to-system integrations (ETL only, not system replacement)
+- Real-time operational processing (focus is analytical/enterprise data)
+
+## Key Deliverables
+
+| # | Deliverable | Description |
+|---|-------------|-------------|
+| 1 | Medallion Architecture Pipeline | Bronze (raw), Silver (cleansed), Gold (aggregated/curated) data layers |
+| 2 | Data Governance Framework | Policies, data quality rules, lineage tracking, access controls |
+| 3 | Source System Connectors | Standardised connectors for all 12 source types |
+| 4 | ML-Ready Data Marts | Feature-engineered datasets accessible by ML pipelines |
+| 5 | Capability Data Models | Unified data models for each of the 7 capability areas |
+| 6 | Monitoring & Observability | Data pipeline health, SLA tracking, error handling |
+
+## Benefits
+
+| Area | Benefit |
+|------|---------|
+| **Insights** | Unified view across all capabilities enables cross-functional analytics (e.g., Recruit → Apply → Enrol funnel analysis) |
+| **Visibility** | End-to-end data lineage and governance provide auditability and compliance for NUH's data assets |
+| **Scalability** | Medallion architecture allows incremental refinement without reprocessing the full dataset |
+| **ML Readiness** | Gold-layer data marts are engineered for direct consumption by ML models, reducing time-to-insight |
+
+## Sample Deliverables
+
+### Sample 1: Medallion Pipeline Structure
+```yaml
+bronze/
+  dynamics/
+  excel/
+  rest_api/
+  soap/
+  csv/
+  webhooks/
+  aws_datahub/
+  aws_hubspot/
+  ghost_inspector/
+  tlmf_portal/
+  social_media/
+  mailchimp/
+silver/
+  design/
+  recruit/
+  apply/
+  enrol/
+  members_fellows/
+  enquiries/
+  records_info/
+gold/
+  capability_marts/
+  ml_features/
+```
+
+### Sample 2: Governance Rule (Data Quality)
+```yaml
+rule: email_not_null
+scope: apply.applicants
+severity: error
+action: reject_record
+logic: applicant_email IS NULL OR applicant_email NOT LIKE '%@%'
+```
+
+### Sample 3: ML-Ready Feature Table (Gold Layer)
+| column | type | description |
+|--------|------|-------------|
+| applicant_id | string | Unique applicant identifier |
+| num_applications_12m | int | Application count in last 12 months |
+| avg_days_to_enrol | float | Average days from Apply → Enrol |
+| source_channel | string | Originating channel (web/social/phone) |
+| is_converted | boolean | Did applicant complete enrolment? |
