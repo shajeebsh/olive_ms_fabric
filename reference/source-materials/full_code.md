@@ -35,6 +35,7 @@ olive_ms_fabric/
 │   ├── README.md
 │   ├── bronze/
 │   │   ├── NB_00_Data_Profiling.py
+│   │   ├── NB_02_Bronze_All_Sources_Ingest.py
 │   │   ├── NB_02_Bronze_Excel_Ingest.py
 │   │   └── NB_03_Bronze_REST_API_Ingest.py
 │   ├── silver/
@@ -60,14 +61,38 @@ olive_ms_fabric/
 │   ├── __init__.py
 │   ├── api_ingestion.py
 │   ├── config_loader.py
+│   ├── connectors/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── registry.py
+│   │   ├── file/
+│   │   │   ├── __init__.py
+│   │   │   ├── csv_connector.py
+│   │   │   └── excel_connector.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── rest_connector.py
+│   │   │   ├── soap_connector.py
+│   │   │   └── webhook_connector.py
+│   │   ├── platform/
+│   │   │   ├── __init__.py
+│   │   │   ├── aws_connector.py
+│   │   │   ├── dynamics_connector.py
+│   │   │   ├── ghost_inspector_connector.py
+│   │   │   ├── hubspot_connector.py
+│   │   │   ├── power_pages_connector.py
+│   │   │   ├── quercus_connector.py
+│   │   │   └── tlmf_connector.py
+│   │   └── social/
+│   │       ├── __init__.py
+│   │       ├── mailchimp_connector.py
+│   │       └── social_media_connector.py
 │   ├── data_quality.py
 │   ├── file_ingestion.py
 │   ├── filesystem.py
 │   ├── gold_dimensional.py
 │   ├── secrets.py
 │   └── transformations/
-│       ├── __init__.py
-│       └── silver_training.py
 └── tests/
     ├── README.md
     ├── test_config.py
@@ -98,7 +123,18 @@ olive_ms_fabric/
   },
   "warehouse": "Gold_Warehouse",
   "data_policy": "synthetic_or_anonymised_only",
-  "schedule_enabled": false
+  "schedule_enabled": false,
+  "connectors": {
+    "enabled": [
+      "excel_training",
+      "excel_medical",
+      "excel_hr",
+      "excel_facilities",
+      "csv_import",
+      "rest_api_lms",
+      "rest_api_hr"
+    ]
+  }
 }
 ```
 
@@ -121,7 +157,18 @@ olive_ms_fabric/
   },
   "warehouse": "Gold_Warehouse",
   "data_policy": "live_data_rbac_required",
-  "schedule_enabled": true
+  "schedule_enabled": true,
+  "connectors": {
+    "enabled": [
+      "excel_training",
+      "excel_medical",
+      "excel_hr",
+      "excel_facilities",
+      "csv_import",
+      "rest_api_lms",
+      "rest_api_hr"
+    ]
+  }
 }
 ```
 
@@ -144,7 +191,18 @@ olive_ms_fabric/
   },
   "warehouse": "Gold_Warehouse",
   "data_policy": "anonymised_or_masked_test_data",
-  "schedule_enabled": true
+  "schedule_enabled": true,
+  "connectors": {
+    "enabled": [
+      "excel_training",
+      "excel_medical",
+      "excel_hr",
+      "excel_facilities",
+      "csv_import",
+      "rest_api_lms",
+      "rest_api_hr"
+    ]
+  }
 }
 ```
 
@@ -906,6 +964,1540 @@ def transform_training_enrolments(df: DataFrame) -> DataFrame:
 
 ---
 
+## Source Code — `src/connectors/`
+
+### `src/connectors/__init__.py`
+
+```python
+from __future__ import annotations
+
+import importlib
+import pkgutil
+
+from src.connectors.registry import ConnectorRegistry
+
+
+def register_all(registry: ConnectorRegistry, config: dict | None = None):
+    import src.connectors as pkg
+    for _finder, name, _ispkg in pkgutil.walk_packages(
+        pkg.__path__, prefix=pkg.__name__ + "."
+    ):
+        mod = importlib.import_module(name)
+        if hasattr(mod, "register_connectors"):
+            mod.register_connectors(registry, config)
+
+
+__all__ = ["register_all"]
+```
+
+### `src/connectors/base.py`
+
+```python
+from __future__ import annotations
+
+import uuid
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from typing import Any
+
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import current_timestamp, lit
+
+from src.config_loader import lakehouse_table
+
+
+@dataclass
+class ConnectorResult:
+    source_system: str
+    batch_id: str
+    rows_written: int
+    status: str
+    error: str | None = None
+    metadata: dict = field(default_factory=dict)
+
+
+class BaseConnector(ABC):
+
+    connector_type: str = "base"
+    source_system: str = "unknown"
+
+    def __init__(self, source_system: str | None = None):
+        if source_system is not None:
+            self.source_system = source_system
+
+    @abstractmethod
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        ...
+
+    def _add_audit_cols(
+        self, df: DataFrame, batch_id: str
+    ) -> DataFrame:
+        return (
+            df
+            .withColumn("_ingested_at", current_timestamp())
+            .withColumn("_source_system", lit(self.source_system))
+            .withColumn("_connector_type", lit(self.connector_type))
+            .withColumn("_batch_id", lit(batch_id))
+            .withColumn("_schema_version", lit("1.0"))
+        )
+
+    def run(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+    ) -> ConnectorResult:
+        batch_id = str(uuid.uuid4())
+        target = lakehouse_table(
+            config, "bronze", f"bronze_{self.source_system}"
+        )
+        try:
+            df_raw = self.extract(spark, config, batch_id)
+            if df_raw is None or df_raw.rdd.isEmpty():
+                return ConnectorResult(
+                    self.source_system, batch_id, 0, "SKIPPED"
+                )
+            df_bronze = self._add_audit_cols(df_raw, batch_id)
+            df_bronze.write.format("delta").mode("append") \
+                .option("mergeSchema", "true") \
+                .saveAsTable(target)
+            rows = df_bronze.count()
+            return ConnectorResult(
+                self.source_system, batch_id, rows, "SUCCESS"
+            )
+        except Exception as e:
+            return ConnectorResult(
+                self.source_system, batch_id, 0,
+                "FAILED", error=str(e)
+            )
+```
+
+### `src/connectors/registry.py`
+
+```python
+from __future__ import annotations
+
+from pyspark.sql import SparkSession
+
+from src.connectors.base import BaseConnector, ConnectorResult
+
+
+class ConnectorRegistry:
+
+    def __init__(self):
+        self._connectors: dict[str, BaseConnector] = {}
+
+    def register(self, connector: BaseConnector):
+        self._connectors[connector.source_system] = connector
+
+    def get(self, source_system: str) -> BaseConnector | None:
+        return self._connectors.get(source_system)
+
+    def list_connectors(self) -> list[str]:
+        return list(self._connectors.keys())
+
+    def run_all(
+        self,
+        spark: SparkSession,
+        config: dict,
+        only: list[str] | None = None,
+    ) -> list[ConnectorResult]:
+        results = []
+        for name, connector in self._connectors.items():
+            if only and name not in only:
+                continue
+            print(f"Running connector: {name}")
+            result = connector.run(spark, config)
+            print(f"  {result.status}: {result.rows_written} rows")
+            results.append(result)
+        return results
+
+    def summary(self, results: list[ConnectorResult]) -> dict:
+        return {
+            "total": len(results),
+            "success": sum(
+                1 for r in results if r.status == "SUCCESS"
+            ),
+            "failed": sum(
+                1 for r in results if r.status == "FAILED"
+            ),
+            "skipped": sum(
+                1 for r in results if r.status == "SKIPPED"
+            ),
+            "rows": sum(r.rows_written for r in results),
+        }
+```
+
+### `src/connectors/file/__init__.py`
+
+```
+
+```
+
+### `src/connectors/file/excel_connector.py`
+
+```python
+from __future__ import annotations
+
+import re
+from typing import Any
+
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import input_file_name, lit
+
+from src.config_loader import lakehouse_table
+from src.connectors.base import BaseConnector
+from src.file_ingestion import (
+    log_schema_drift,
+    md5_of_file,
+    move_file,
+    register_file,
+    registry_action,
+)
+from src.filesystem import get_filesystem
+
+
+FILE_PATTERN = re.compile(
+    r"^(training_enrolments|doctor_schedules|staff_roster|room_bookings)_"
+    r"\d{4}_(0[1-9]|1[0-2]|W\d{2})\.xlsx$"
+)
+
+EXPECTED_COLUMNS: dict[str, list[str]] = {
+    "excel_training": [
+        "StudentID", "CourseCode", "EnrolDate", "CompletionDate",
+        "Score", "Status",
+    ],
+    "excel_medical": [
+        "DoctorID", "ScheduleDate", "ShiftStart", "ShiftEnd",
+        "HoursLogged", "ProcedureCode", "Department",
+    ],
+    "excel_hr": [
+        "EmployeeID", "FirstName", "LastName", "JobTitle",
+        "Department", "ContractedHoursPerMonth",
+    ],
+    "excel_facilities": [
+        "RoomID", "BookedBy", "BookingDate", "StartTime",
+        "EndTime", "Purpose",
+    ],
+}
+
+SOURCE_LANDING_PATHS = {
+    "excel_training": "Files/landing/training/",
+    "excel_medical": "Files/landing/medical/",
+    "excel_hr": "Files/landing/hr/",
+    "excel_facilities": "Files/landing/facilities/",
+}
+
+
+class ExcelConnector(BaseConnector):
+    connector_type = "file_excel"
+
+    def __init__(
+        self,
+        source_system: str = "excel_training",
+        landing_path: str | None = None,
+    ):
+        super().__init__(source_system=source_system)
+        self.landing_path = landing_path or SOURCE_LANDING_PATHS.get(
+            source_system, "Files/landing/"
+        )
+        self.expected_cols = EXPECTED_COLUMNS.get(source_system, [])
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        fs = get_filesystem()
+        try:
+            files = [f for f in fs.ls(self.landing_path)
+                     if f.name.endswith(".xlsx")]
+        except Exception:
+            print(f"No landing folder found: {self.landing_path}")
+            return None
+
+        if not files:
+            return None
+
+        dfs = []
+        for file_info in files:
+            file_name = file_info.name
+            file_path = file_info.path
+
+            if not FILE_PATTERN.match(file_name):
+                register_file(
+                    spark, config, file_name, file_path,
+                    file_info.size, "", self.source_system,
+                    "FAILED", batch_id, error="Invalid filename",
+                )
+                move_file(fs, file_path, "rejected")
+                continue
+
+            file_hash = md5_of_file(fs, file_path)
+            action = registry_action(
+                spark, config, file_name, file_hash
+            )
+
+            if action == "DUPLICATE":
+                register_file(
+                    spark, config, file_name, file_path,
+                    file_info.size, file_hash, self.source_system,
+                    "DUPLICATE", batch_id,
+                )
+                move_file(fs, file_path, "rejected")
+                continue
+
+            try:
+                df_raw = (
+                    spark.read.format("com.crealytics.spark.excel")
+                    .option("header", "true")
+                    .option("inferSchema", "false")
+                    .option("treatEmptyValuesAsNulls", "true")
+                    .option("dataAddress", "Sheet1!A1")
+                    .load(file_path)
+                )
+                row_count = df_raw.count()
+                if row_count == 0:
+                    register_file(
+                        spark, config, file_name, file_path,
+                        file_info.size, file_hash, self.source_system,
+                        "FAILED", batch_id,
+                        error="File contains 0 rows",
+                    )
+                    move_file(fs, file_path, "rejected")
+                    continue
+
+                drift_count = log_schema_drift(
+                    spark, config, self.source_system, file_name,
+                    df_raw.columns, self.expected_cols, batch_id,
+                )
+                if drift_count:
+                    print(
+                        f"Schema drift for {file_name}: "
+                        f"{drift_count} change(s)."
+                    )
+
+                df_enriched = (
+                    df_raw
+                    .withColumn("_source_file", input_file_name())
+                    .withColumn("_file_hash", lit(file_hash))
+                    .withColumn(
+                        "_is_correction", lit(action == "CORRECTION")
+                    )
+                )
+
+                register_file(
+                    spark, config, file_name, file_path,
+                    file_info.size, file_hash, self.source_system,
+                    "SUCCESS", batch_id, row_count,
+                )
+                move_file(fs, file_path, "processed")
+                dfs.append(df_enriched)
+
+            except Exception as exc:
+                register_file(
+                    spark, config, file_name, file_path,
+                    file_info.size, file_hash, self.source_system,
+                    "FAILED", batch_id, error=str(exc),
+                )
+                move_file(fs, file_path, "rejected")
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for d in dfs[1:]:
+            result = result.unionByName(d, allowMissingColumns=True)
+        return result
+
+
+def register_connectors(registry, config=None):
+    for source_system in SOURCE_LANDING_PATHS:
+        registry.register(ExcelConnector(source_system=source_system))
+```
+
+### `src/connectors/file/csv_connector.py`
+
+```python
+from __future__ import annotations
+
+import re
+from typing import Any
+
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import input_file_name, lit
+
+from src.connectors.base import BaseConnector
+from src.file_ingestion import (
+    md5_of_file,
+    move_file,
+    register_file,
+    registry_action,
+)
+from src.filesystem import get_filesystem
+
+
+FILE_PATTERN = re.compile(
+    r"^[a-z_]+_\d{4}_(0[1-9]|1[0-2])\.csv$"
+)
+
+
+class CsvConnector(BaseConnector):
+    connector_type = "file_csv"
+    source_system = "csv_import"
+    landing_path = "Files/landing/csv/"
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        fs = get_filesystem()
+        try:
+            files = [f for f in fs.ls(self.landing_path)
+                     if f.name.endswith(".csv")]
+        except Exception:
+            print(f"No landing folder found: {self.landing_path}")
+            return None
+
+        if not files:
+            return None
+
+        dfs = []
+        for f in files:
+            if not FILE_PATTERN.match(f.name):
+                register_file(
+                    spark, config, f.name, f.path, f.size,
+                    "", self.source_system, "FAILED", batch_id,
+                    error="Invalid filename",
+                )
+                move_file(fs, f.path, "rejected")
+                continue
+
+            file_hash = md5_of_file(fs, f.path)
+            action = registry_action(
+                spark, config, f.name, file_hash
+            )
+
+            if action == "DUPLICATE":
+                register_file(
+                    spark, config, f.name, f.path, f.size,
+                    file_hash, self.source_system,
+                    "DUPLICATE", batch_id,
+                )
+                move_file(fs, f.path, "rejected")
+                continue
+
+            df = (
+                spark.read
+                .option("header", "true")
+                .option("inferSchema", "false")
+                .option("sep", ",")
+                .option("encoding", "UTF-8")
+                .option("multiLine", "true")
+                .option("escape", '"')
+                .option("nullValue", "")
+                .csv(f.path)
+            )
+
+            df_enriched = (
+                df
+                .withColumn("_source_file", input_file_name())
+                .withColumn("_file_hash", lit(file_hash))
+                .withColumn(
+                    "_is_correction", lit(action == "CORRECTION")
+                )
+            )
+
+            register_file(
+                spark, config, f.name, f.path, f.size,
+                file_hash, self.source_system, "SUCCESS",
+                batch_id, df.count(),
+            )
+            move_file(fs, f.path, "processed")
+            dfs.append(df_enriched)
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for d in dfs[1:]:
+            result = result.unionByName(d, allowMissingColumns=True)
+        return result
+
+
+def register_connectors(registry, config=None):
+    registry.register(CsvConnector())
+```
+
+### `src/connectors/api/__init__.py`
+
+```
+
+```
+
+### `src/connectors/api/rest_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from typing import Any
+
+from pyspark.sql import DataFrame, SparkSession
+
+from src.api_ingestion import (
+    fetch_all_pages,
+    flatten_struct_cols,
+    get_oauth2_token,
+    is_circuit_open,
+)
+from src.config_loader import lakehouse_table
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+API_SOURCE_CONFIGS: dict[str, dict[str, Any]] = {
+    "rest_api_lms": {
+        "endpoint": "/enrolments",
+        "auth_type": "bearer",
+        "secret_key": "lms-api-token",
+        "delta_param": "updated_since",
+        "page_size": 500,
+    },
+    "rest_api_hr": {
+        "endpoint": "/staff",
+        "auth_type": "oauth2",
+        "secret_key": "hr-client-secret",
+        "client_id": "fabric_client",
+        "token_url": "https://hr.example.org/oauth/token",
+        "delta_param": "modified_after",
+        "page_size": 200,
+    },
+}
+
+
+class RestApiConnector(BaseConnector):
+    connector_type = "rest_api"
+
+    def __init__(
+        self,
+        source_system: str = "rest_api_lms",
+        api_cfg: dict[str, Any] | None = None,
+    ):
+        super().__init__(source_system=source_system)
+        self.api_cfg = api_cfg or {}
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        if is_circuit_open(self.source_system):
+            print(
+                f"Circuit open for {self.source_system}, skipping."
+            )
+            return None
+
+        cfg = self.api_cfg
+        secrets = get_secrets()
+        control_watermark = lakehouse_table(
+            config, "bronze", "control_watermark"
+        )
+
+        wm_row = spark.sql(
+            f"SELECT last_run_ts FROM {control_watermark} "
+            f"WHERE source_system = '{self.source_system}' "
+            f"LIMIT 1"
+        ).first()
+        watermark_ts = (
+            wm_row["last_run_ts"]
+            if wm_row
+            else datetime(1900, 1, 1, tzinfo=timezone.utc)
+        )
+        watermark_value = watermark_ts.isoformat()
+
+        scope = config.get("secret_scope", "")
+        if cfg.get("auth_type") == "oauth2":
+            token = get_oauth2_token(secrets, self.source_system, {
+                **cfg,
+                "secret_scope": scope,
+            })
+        else:
+            token = secrets.get(scope, cfg.get("secret_key", ""))
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+        params = {
+            cfg.get("delta_param", "updated_since"): watermark_value,
+            "page_size": cfg.get("page_size", 500),
+        }
+
+        records = fetch_all_pages(
+            spark, config, self.source_system,
+            {**cfg, "base_url": config.get("api_base_url", ""),
+             "secret_scope": scope},
+            headers, params, watermark_ts,
+        )
+
+        if not records:
+            print(
+                f"No new records for {self.source_system}."
+            )
+            return None
+
+        df_api = spark.read.json(
+            spark.sparkContext.parallelize(
+                [json.dumps(r) for r in records]
+            )
+        )
+        df_api = flatten_struct_cols(df_api)
+
+        spark.sql(f"""
+            UPDATE {control_watermark}
+            SET last_run_ts = current_timestamp(),
+                last_batch_id = '{batch_id}',
+                last_row_count = {len(records)},
+                status = 'SUCCESS',
+                updated_at = current_timestamp()
+            WHERE source_system = '{self.source_system}'
+        """)
+        print(
+            f"Loaded {len(records)} records "
+            f"for {self.source_system}."
+        )
+
+        return df_api
+
+
+def register_connectors(registry, config=None):
+    base_url = ""
+    scope = ""
+    if config:
+        base_url = config.get("api_base_url", "")
+        scope = config.get("secret_scope", "")
+
+    for source_system, api_cfg in API_SOURCE_CONFIGS.items():
+        full_cfg = {
+            **api_cfg,
+            "base_url": base_url,
+            "secret_scope": scope,
+        }
+        registry.register(
+            RestApiConnector(
+                source_system=source_system,
+                api_cfg=full_cfg,
+            )
+        )
+```
+
+### `src/connectors/api/soap_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from typing import Any
+
+from pyspark.sql import DataFrame, SparkSession
+
+from src.api_ingestion import flatten_struct_cols
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class SoapConnector(BaseConnector):
+    connector_type = "soap"
+    source_system = "soap_webservice"
+    wsdl_url: str = ""
+    operation: str = ""
+    secret_key: str = ""
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        from zeep import Client
+        from zeep.helpers import serialize_object
+        from zeep.transports import Transport
+        from requests import Session
+
+        secrets = get_secrets()
+        token = secrets.get(
+            config.get("secret_scope", ""), self.secret_key
+        )
+
+        session = Session()
+        session.headers.update(
+            {"Authorization": f"Bearer {token}"}
+        )
+        transport = Transport(session=session)
+        client = Client(wsdl=self.wsdl_url, transport=transport)
+
+        response = getattr(client.service, self.operation)()
+        raw_dict = serialize_object(response, target_cls=dict)
+        records = (
+            raw_dict if isinstance(raw_dict, list) else [raw_dict]
+        )
+
+        if not records:
+            return None
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) for r in records]
+        )
+        df = spark.read.json(rdd)
+        return flatten_struct_cols(df)
+
+
+def register_connectors(registry, config=None):
+    if config and "connectors" in config:
+        soap_cfg = config["connectors"].get("soap_webservice", {})
+        if soap_cfg:
+            connector = SoapConnector()
+            connector.wsdl_url = soap_cfg.get("wsdl_url", "")
+            connector.operation = soap_cfg.get("operation", "")
+            connector.secret_key = soap_cfg.get("secret_key", "")
+            registry.register(connector)
+```
+
+### `src/connectors/api/webhook_connector.py`
+
+```python
+from __future__ import annotations
+
+from typing import Any
+
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col, from_json, schema_of_json
+
+from src.connectors.base import BaseConnector
+
+
+class WebhookConnector(BaseConnector):
+    connector_type = "webhook"
+    source_system = "webhook"
+    event_table: str = "Bronze_Lakehouse.bronze_webhook_events"
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        df = spark.table(self.event_table).filter(
+            col("_batch_id").isNull()
+        )
+        if df.rdd.isEmpty():
+            return None
+
+        sample = (
+            df.select("payload").limit(1).first()["payload"]
+        )
+        schema = schema_of_json(sample)
+        df = df.withColumn(
+            "payload_parsed",
+            from_json(col("payload"), schema),
+        )
+        for field_name in df.select("payload_parsed.*").columns:
+            df = df.withColumn(
+                field_name,
+                col(f"payload_parsed.{field_name}"),
+            )
+        return df.drop("payload_parsed")
+
+
+def register_connectors(registry, config=None):
+    registry.register(WebhookConnector())
+```
+
+### `src/connectors/platform/__init__.py`
+
+```
+
+```
+
+### `src/connectors/platform/dynamics_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import requests
+from pyspark.sql import DataFrame, SparkSession
+
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class DynamicsConnector(BaseConnector):
+    connector_type = "dynamics_odata"
+    source_system = "ms_dynamics"
+    entity: str = "contacts"
+
+    def _get_aad_token(
+        self, config: dict[str, Any]
+    ) -> str:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        tenant = secrets.get(scope, "dynamics-tenant-id")
+        client_id = secrets.get(scope, "dynamics-client-id")
+        client_secret = secrets.get(
+            scope, "dynamics-client-secret"
+        )
+        resource = secrets.get(
+            scope, "dynamics-resource-url"
+        )
+        resp = requests.post(
+            f"https://login.microsoftonline.com/"
+            f"{tenant}/oauth2/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "resource": resource,
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()["access_token"]
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        base_url = secrets.get(scope, "dynamics-base-url")
+        token = self._get_aad_token(config)
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "OData-MaxVersion": "4.0",
+            "Prefer": "odata.track-changes",
+        }
+
+        delta_row = spark.sql(f"""
+            SELECT last_batch_id
+            FROM Bronze_Lakehouse.control_watermark
+            WHERE source_system = 'ms_dynamics_{self.entity}'
+        """).first()
+        delta_token = (
+            delta_row["last_batch_id"] if delta_row else None
+        )
+
+        if delta_token:
+            url = (
+                f"{base_url}/api/data/v9.2/{self.entity}"
+                f"?$deltatoken={delta_token}"
+            )
+        else:
+            url = (
+                f"{base_url}/api/data/v9.2/{self.entity}"
+                f"?$top=5000"
+            )
+
+        all_records, next_link = [], url
+        new_token = None
+        while next_link:
+            resp = requests.get(
+                next_link, headers=headers, timeout=30
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            all_records.extend(data.get("value", []))
+            next_link = data.get("@odata.nextLink")
+            delta_link = data.get("@odata.deltaLink", "")
+            if delta_link:
+                new_token = delta_link.split(
+                    "deltatoken="
+                )[-1]
+
+        if not all_records:
+            return None
+
+        if new_token:
+            spark.sql(f"""
+                UPDATE Bronze_Lakehouse.control_watermark
+                SET last_batch_id='{new_token}',
+                    updated_at=current_timestamp()
+                WHERE source_system='ms_dynamics_{self.entity}'
+            """)
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) for r in all_records]
+        )
+        return spark.read.json(rdd)
+
+
+def register_connectors(registry, config=None):
+    registry.register(DynamicsConnector())
+    registry.register(PowerPagesConnector())
+```
+
+### `src/connectors/platform/power_pages_connector.py`
+
+```python
+from src.connectors.platform.dynamics_connector import DynamicsConnector
+
+
+class PowerPagesConnector(DynamicsConnector):
+    connector_type = "power_pages_dataverse"
+    source_system = "ms_power_pages"
+    entity = "cr123_formsubmissions"
+```
+
+### `src/connectors/platform/aws_connector.py`
+
+```python
+from __future__ import annotations
+
+from typing import Any
+
+from pyspark.sql import DataFrame, SparkSession
+
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class AwsDataHubConnector(BaseConnector):
+    connector_type = "aws_s3"
+    source_system = "aws_datahub"
+    s3_prefix: str = "exports/"
+
+    def _get_s3_client(
+        self, config: dict[str, Any]
+    ):
+        import boto3
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        return boto3.client(
+            "s3",
+            aws_access_key_id=secrets.get(
+                scope, "aws-access-key-id"
+            ),
+            aws_secret_access_key=secrets.get(
+                scope, "aws-secret-access-key"
+            ),
+            region_name="eu-west-1",
+        )
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        bucket = secrets.get(scope, "aws-s3-bucket")
+        s3 = self._get_s3_client(config)
+        landing = "Files/landing/aws/"
+
+        wm_row = spark.sql("""
+            SELECT last_run_ts
+            FROM Bronze_Lakehouse.control_watermark
+            WHERE source_system = 'aws_datahub'
+        """).first()
+        since = (
+            wm_row["last_run_ts"] if wm_row else None
+        )
+
+        objects = s3.list_objects_v2(
+            Bucket=bucket, Prefix=self.s3_prefix
+        )
+        new_keys = []
+        for obj in objects.get("Contents", []):
+            if since is None or (
+                obj["LastModified"].replace(tzinfo=None)
+                > since
+            ):
+                new_keys.append(obj["Key"])
+
+        if not new_keys:
+            return None
+
+        from src.filesystem import get_filesystem
+        fs = get_filesystem()
+        fs.mkdirs(landing)
+        for key in new_keys:
+            local_name = key.replace("/", "_")
+            s3.download_file(
+                bucket, key, f"/tmp/{local_name}"
+            )
+            mssparkutils.fs.cp(
+                f"file:///tmp/{local_name}",
+                f"{landing}{local_name}",
+            )
+
+        return spark.read.parquet(landing)
+
+
+def register_connectors(registry, config=None):
+    registry.register(AwsDataHubConnector())
+```
+
+### `src/connectors/platform/hubspot_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import requests
+from pyspark.sql import DataFrame, SparkSession
+
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class HubSpotConnector(BaseConnector):
+    connector_type = "hubspot_api"
+    source_system = "aws_hubspot"
+    object_type: str = "contacts"
+    properties: list[str] = [
+        "firstname", "lastname", "email", "hs_object_id",
+    ]
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        token = secrets.get(
+            scope, "hubspot-private-app-token"
+        )
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+        base = (
+            f"https://api.hubapi.com/crm/v3/objects/"
+            f"{self.object_type}"
+        )
+        props = ",".join(self.properties)
+
+        all_records, after = [], None
+        while True:
+            params = {"limit": 100, "properties": props}
+            if after:
+                params["after"] = after
+            resp = requests.get(
+                base, headers=headers,
+                params=params, timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            all_records.extend(data.get("results", []))
+            paging = data.get("paging", {}).get("next", {})
+            after = paging.get("after")
+            if not after:
+                break
+
+        if not all_records:
+            return None
+
+        flat = [
+            {**r.get("properties", {}), "id": r.get("id")}
+            for r in all_records
+        ]
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) for r in flat]
+        )
+        return spark.read.json(rdd)
+
+
+def register_connectors(registry, config=None):
+    registry.register(HubSpotConnector())
+```
+
+### `src/connectors/platform/ghost_inspector_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import requests
+from pyspark.sql import DataFrame, SparkSession
+
+from src.api_ingestion import flatten_struct_cols
+from src.config_loader import lakehouse_table
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class GhostInspectorConnector(BaseConnector):
+    connector_type = "ghost_inspector_api"
+    source_system = "ghost_inspector"
+    api_key_secret: str = "ghost-inspector-api-key"
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        api_key = secrets.get(scope, self.api_key_secret)
+
+        control_watermark = lakehouse_table(
+            config, "bronze", "control_watermark"
+        )
+        wm_row = spark.sql(f"""
+            SELECT last_run_ts FROM {control_watermark}
+            WHERE source_system = '{self.source_system}'
+            LIMIT 1
+        """).first()
+        since = (
+            wm_row["last_run_ts"].isoformat()
+            if wm_row else None
+        )
+
+        params = {"apiKey": api_key}
+        if since:
+            params["updatedAfter"] = since
+
+        resp = requests.get(
+            "https://api.ghostinspector.com/v1/suites/",
+            params=params, timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json().get("data", [])
+
+        if not data:
+            return None
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) for r in data]
+        )
+        df = spark.read.json(rdd)
+        df = flatten_struct_cols(df)
+
+        spark.sql(f"""
+            UPDATE {control_watermark}
+            SET last_run_ts = current_timestamp(),
+                last_batch_id = '{batch_id}',
+                last_row_count = {len(data)},
+                status = 'SUCCESS',
+                updated_at = current_timestamp()
+            WHERE source_system = '{self.source_system}'
+        """)
+
+        return df
+
+
+def register_connectors(registry, config=None):
+    registry.register(GhostInspectorConnector())
+```
+
+### `src/connectors/platform/quercus_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from typing import Any
+
+import requests
+from pyspark.sql import DataFrame, SparkSession
+
+from src.api_ingestion import flatten_struct_cols
+from src.config_loader import lakehouse_table
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class QuercusConnector(BaseConnector):
+    connector_type = "quercus_api"
+    source_system = "quercus"
+    base_url: str = "https://quercus.university.ie/api/v1"
+    endpoint: str = "/students"
+    secret_key: str = "quercus-api-key"
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        api_key = secrets.get(scope, self.secret_key)
+
+        control_watermark = lakehouse_table(
+            config, "bronze", "control_watermark"
+        )
+        wm_row = spark.sql(f"""
+            SELECT last_run_ts FROM {control_watermark}
+            WHERE source_system = '{self.source_system}'
+            LIMIT 1
+        """).first()
+        since = (
+            wm_row["last_run_ts"]
+            if wm_row
+            else datetime(1900, 1, 1, tzinfo=timezone.utc)
+        )
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        params = {
+            "modified_since": since.isoformat(),
+            "page_size": 500,
+        }
+
+        all_records, page = [], 1
+        while True:
+            params["page"] = page
+            resp = requests.get(
+                f"{self.base_url}{self.endpoint}",
+                headers=headers,
+                params=params,
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            batch = data.get("results", [])
+            all_records.extend(batch)
+            if not batch or not data.get("next"):
+                break
+            page += 1
+
+        if not all_records:
+            return None
+
+        spark.sql(f"""
+            UPDATE {control_watermark}
+            SET last_run_ts = current_timestamp(),
+                last_batch_id = '{batch_id}',
+                last_row_count = {len(all_records)},
+                status = 'SUCCESS',
+                updated_at = current_timestamp()
+            WHERE source_system = '{self.source_system}'
+        """)
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) for r in all_records]
+        )
+        df = spark.read.json(rdd)
+        return flatten_struct_cols(df)
+
+
+def register_connectors(registry, config=None):
+    registry.register(QuercusConnector())
+```
+
+### `src/connectors/platform/tlmf_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from typing import Any
+
+import requests
+from pyspark.sql import DataFrame, SparkSession
+
+from src.api_ingestion import flatten_struct_cols
+from src.config_loader import lakehouse_table
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class TlmfConnector(BaseConnector):
+    connector_type = "tlmf_api"
+    source_system = "tlmf"
+    base_url: str = (
+        "https://portal.tlmf.university.ie/api"
+    )
+    endpoint: str = "/activity"
+    secret_key: str = "tlmf-api-key"
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        api_key = secrets.get(scope, self.secret_key)
+
+        control_watermark = lakehouse_table(
+            config, "bronze", "control_watermark"
+        )
+        wm_row = spark.sql(f"""
+            SELECT last_run_ts FROM {control_watermark}
+            WHERE source_system = '{self.source_system}'
+            LIMIT 1
+        """).first()
+        since = (
+            wm_row["last_run_ts"]
+            if wm_row
+            else datetime(1900, 1, 1, tzinfo=timezone.utc)
+        )
+
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        }
+        params = {
+            "updated_after": since.isoformat(),
+            "limit": 1000,
+        }
+
+        all_records, offset = [], 0
+        while True:
+            params["offset"] = offset
+            resp = requests.get(
+                f"{self.base_url}{self.endpoint}",
+                headers=headers,
+                params=params,
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            batch = (
+                data if isinstance(data, list)
+                else data.get("data", [])
+            )
+            all_records.extend(batch)
+            if len(batch) < 1000:
+                break
+            offset += 1000
+
+        if not all_records:
+            return None
+
+        spark.sql(f"""
+            UPDATE {control_watermark}
+            SET last_run_ts = current_timestamp(),
+                last_batch_id = '{batch_id}',
+                last_row_count = {len(all_records)},
+                status = 'SUCCESS',
+                updated_at = current_timestamp()
+            WHERE source_system = '{self.source_system}'
+        """)
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) for r in all_records]
+        )
+        df = spark.read.json(rdd)
+        return flatten_struct_cols(df)
+
+
+def register_connectors(registry, config=None):
+    registry.register(TlmfConnector())
+```
+
+### `src/connectors/social/__init__.py`
+
+```
+
+```
+
+### `src/connectors/social/mailchimp_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import requests
+from pyspark.sql import DataFrame, SparkSession
+
+from src.api_ingestion import flatten_struct_cols
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class MailchimpConnector(BaseConnector):
+    connector_type = "mailchimp_api"
+    source_system = "mailchimp"
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        api_key = secrets.get(scope, "mailchimp-api-key")
+        dc = api_key.split("-")[-1]
+        base_url = f"https://{dc}.api.mailchimp.com/3.0"
+        auth = ("anystring", api_key)
+
+        all_campaigns = []
+        offset, count = 0, 100
+        while True:
+            resp = requests.get(
+                f"{base_url}/campaigns",
+                auth=auth,
+                params={
+                    "count": count,
+                    "offset": offset,
+                    "fields": (
+                        "campaigns.id,campaigns.settings,"
+                        "campaigns.stats"
+                    ),
+                },
+                timeout=30,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            batch = data.get("campaigns", [])
+            all_campaigns.extend(batch)
+            if len(batch) < count:
+                break
+            offset += count
+
+        if not all_campaigns:
+            return None
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(c) for c in all_campaigns]
+        )
+        df = spark.read.json(rdd)
+        return flatten_struct_cols(df)
+
+
+def register_connectors(registry, config=None):
+    registry.register(MailchimpConnector())
+```
+
+### `src/connectors/social/social_media_connector.py`
+
+```python
+from __future__ import annotations
+
+import json
+from typing import Any
+
+import requests
+from pyspark.sql import DataFrame, SparkSession
+
+from src.api_ingestion import flatten_struct_cols
+from src.connectors.base import BaseConnector
+from src.secrets import get_secrets
+
+
+class MetaGraphConnector(BaseConnector):
+    connector_type = "meta_graph_api"
+    source_system = "social_meta"
+    fields: str = (
+        "id,message,created_time,story,"
+        "likes.summary(true)"
+    )
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        page_token = secrets.get(scope, "meta-page-token")
+        page_id = secrets.get(scope, "meta-page-id")
+
+        posts, next_url = [], (
+            f"https://graph.facebook.com/v19.0/"
+            f"{page_id}/posts"
+            f"?fields={self.fields}"
+            f"&access_token={page_token}"
+        )
+        while next_url:
+            resp = requests.get(next_url, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            posts.extend(data.get("data", []))
+            next_url = data.get("paging", {}).get("next")
+
+        if not posts:
+            return None
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(p) for p in posts]
+        )
+        df = spark.read.json(rdd)
+        return flatten_struct_cols(df)
+
+
+class LinkedInConnector(BaseConnector):
+    connector_type = "linkedin_api"
+    source_system = "social_linkedin"
+
+    def extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        scope = config.get("secret_scope", "")
+        token = secrets.get(
+            scope, "linkedin-access-token"
+        )
+        org_id = secrets.get(
+            scope, "linkedin-org-id"
+        )
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "LinkedIn-Version": "202402",
+        }
+        resp = requests.get(
+            "https://api.linkedin.com/v2/ugcPosts"
+            f"?q=authors&authors=urn:li:organization:"
+            f"{org_id}",
+            headers=headers,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json().get("elements", [])
+
+        if not data:
+            return None
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(p) for p in data]
+        )
+        return spark.read.json(rdd)
+
+
+def register_connectors(registry, config=None):
+    registry.register(MetaGraphConnector())
+    registry.register(LinkedInConnector())
+```
+
+---
+
 ## Notebooks
 
 ### `notebooks/bronze/NB_00_Data_Profiling.py`
@@ -980,6 +2572,66 @@ report = {
 spark.sparkContext.parallelize([json.dumps(report, indent=2)]).saveAsTextFile(
     f"{REPORT_PATH}profile_{spark._sc.applicationId}"
 )
+```
+
+### `notebooks/bronze/NB_02_Bronze_All_Sources_Ingest.py`
+
+```python
+# NB_02_Bronze_All_Sources_Ingest
+# Layer: Bronze
+# Purpose: Unified ingestion for all source types using the ConnectorRegistry.
+#          Replaces NB_02_Bronze_Excel_Ingest and NB_03_Bronze_REST_API_Ingest.
+#          Auto-discovers all registered connectors and runs them.
+
+import uuid
+
+from pyspark.sql.functions import current_timestamp
+
+from src.config_loader import load_config
+from src.connectors import register_all
+from src.connectors.registry import ConnectorRegistry
+
+config = load_config()
+registry = ConnectorRegistry()
+
+register_all(registry, config)
+
+enabled_sources = config.get("connectors", {}).get("enabled", None)
+
+results = registry.run_all(spark, config, only=enabled_sources)
+
+summary = registry.summary(results)
+print(f"Ingestion complete: {summary}")
+
+log_rows = [
+    (
+        str(uuid.uuid4()),
+        "NB_02_All_Sources",
+        r.source_system,
+        r.batch_id,
+        r.rows_written,
+        r.status,
+        r.error,
+    )
+    for r in results
+]
+spark.createDataFrame(
+    log_rows,
+    "log_id STRING, pipeline_name STRING, source_system STRING, "
+    "batch_id STRING, rows_written LONG, status STRING, "
+    "error_message STRING",
+).withColumn("end_ts", current_timestamp()) \
+ .write.format("delta").mode("append") \
+ .saveAsTable("Bronze_Lakehouse.control_pipeline_log")
+
+critical_failures = [
+    r for r in results if r.status == "FAILED"
+]
+if critical_failures:
+    names = [r.source_system for r in critical_failures]
+    raise Exception(
+        f"Connectors failed: {names}. See control_pipeline_log."
+    )
 ```
 
 ### `notebooks/bronze/NB_02_Bronze_Excel_Ingest.py`

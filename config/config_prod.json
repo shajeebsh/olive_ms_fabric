@@ -14,5 +14,16 @@
   },
   "warehouse": "Gold_Warehouse",
   "data_policy": "live_data_rbac_required",
-  "schedule_enabled": true
+  "schedule_enabled": true,
+  "connectors": {
+    "enabled": [
+      "excel_training",
+      "excel_medical",
+      "excel_hr",
+      "excel_facilities",
+      "csv_import",
+      "rest_api_lms",
+      "rest_api_hr"
+    ]
+  }
 }

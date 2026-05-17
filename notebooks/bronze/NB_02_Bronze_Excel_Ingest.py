@@ -1,6 +1,9 @@
 # NB_02_Bronze_Excel_Ingest
 # Layer: Bronze
 # Purpose: Ingest Excel files with duplicate detection and file registry tracking.
+#
+# DEPRECATED: Use NB_02_Bronze_All_Sources_Ingest instead.
+# This notebook is preserved for reference and backward compatibility.
 
 import re
 import uuid

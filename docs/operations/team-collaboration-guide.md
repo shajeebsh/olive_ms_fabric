@@ -1,6 +1,6 @@
 # Team Collaboration Guide
 
-> Complete guide to working effectively in a multi-person team on the PwC university data platform project, covering team structure, task allocation, Git workflow, communication, and day one priorities.
+> Complete guide to working effectively in a multi-person team on the consultancy university data platform project, covering team structure, task allocation, Git workflow, communication, and day one priorities.
 
 ---
 
@@ -38,15 +38,15 @@ The single most important thing on day one: You already know more about this pro
 
 **Map the team before you assign any work.** Every person on the project has a different skill level, context, and motivation. Before splitting work, spend your first two days understanding each person. A junior analyst given a task that is too hard will go quiet and miss the deadline. A senior person given something too basic will disengage. Your job as the technical lead is to match the task difficulty to the person's capability and give them enough context to succeed independently.
 
-### Typical Roles on a PwC Data Project
+### Typical Roles on a Consultancy Data Project
 
 | Role | Description |
 |---|---|
-| **PwC Engagement Manager** | Owns the client relationship and commercial delivery. Not technical. Needs a weekly status summary, risk flags, and to look good in front of the university. Give them a one-page update every Friday — they will use it verbatim with the client. |
-| **Data Lead / Senior Engineer** | Your closest collaborator. Probably has broader PwC context you lack. Respect their decisions in front of the client even if you disagree — resolve differences privately. Make them look good and they will protect you. |
+| **Engagement Manager** | Owns the client relationship and commercial delivery. Not technical. Needs a weekly status summary, risk flags, and to look good in front of the university. Give them a one-page update every Friday — they will use it verbatim with the client. |
+| **Data Lead / Senior Engineer** | Your closest collaborator. Probably has broader consultancy context you lack. Respect their decisions in front of the client even if you disagree — resolve differences privately. Make them look good and they will protect you. |
 | **Mid-level analyst / engineer** | Can own a specific layer or pipeline independently if given clear specs. Assign them Bronze ingestion or Silver transformations with the STTM document as their reference. Check in daily, not hourly — give autonomy but stay available. |
 | **Junior analyst** | Best used for data profiling, documentation, testing, and STTM updates. Do not give them production pipeline work without a senior reviewer. Pair them with a mid-level person for the first two weeks so they learn the patterns before working alone. |
-| **University IT contact** | Not PwC staff but critical. They control SharePoint access, API credentials, and network firewall approvals. Identify them on day one and build a good relationship. Every blocked task eventually traces back to waiting for something from IT. |
+| **University IT contact** | Not the consultancy staff but critical. They control SharePoint access, API credentials, and network firewall approvals. Identify them on day one and build a good relationship. Every blocked task eventually traces back to waiting for something from IT. |
 | **University data steward / DPO** | The governance gatekeeper. Needs to sign off on sensitivity labels, RBAC changes, and the GDPR evidence package. Brief them early — a late surprise from the DPO can delay PROD deployment by weeks. |
 
 ---
@@ -112,7 +112,7 @@ Examples:
 
 ### PR Review Rules
 
-- **R1:** Every PR needs at least one reviewer who did not write it. Junior PRs reviewed by mid-level or senior. Mid-level PRs reviewed by you or the data lead. PRs to main require your sign-off plus the PwC manager's approval.
+- **R1:** Every PR needs at least one reviewer who did not write it. Junior PRs reviewed by mid-level or senior. Mid-level PRs reviewed by you or the data lead. PRs to main require your sign-off plus the consultancy manager's approval.
 - **R2:** PR description must include: what changed, why, how to test it. Create a PR template in Azure DevOps so this is enforced. A PR with only a title and no description does not get reviewed — it gets returned to the author.
 - **R3:** DQ checks must pass before any Silver PR merges. Run NB_07 in DEV against the feature branch output. Attach the DQ scorecard screenshot to the PR. If quality score is below 90%, the PR does not merge.
 - **R4:** Resolve PR comments within 24 hours. A PR that sits unreviewed for 3 days blocks the person who raised it. Set a team norm: PRs get reviewed within one business day, and authors address comments within one business day of receiving them.
@@ -149,7 +149,7 @@ Examples:
 
 ## Leading as a Contractor
 
-You are a contractor, not a permanent staff member — this changes how you lead. Your authority comes from technical credibility, not from hierarchy. You cannot tell a PwC employee what to do. What you can do is make recommendations so clearly reasoned that following them is the obvious choice. Build your influence through expertise and reliability, not through assertiveness.
+You are a contractor, not a permanent staff member — this changes how you lead. Your authority comes from technical credibility, not from hierarchy. You cannot tell a consultancy employee what to do. What you can do is make recommendations so clearly reasoned that following them is the obvious choice. Build your influence through expertise and reliability, not through assertiveness.
 
 ### Specific Leadership Behaviours
 

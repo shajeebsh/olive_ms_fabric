@@ -79,7 +79,7 @@ Open a Fabric Notebook in UNIV-DEV. Write and test NB_04_Silver_Transformation. 
 **↓**
 
 ### Step 2 — Raise a Pull Request: feature → develop `automatic`
-In Azure DevOps → Repos → Pull Requests → New PR. Source: `feature/NB-04-silver-staff` → Target: `develop`. Assign the PwC manager as reviewer. PR description: what changed, why, which DQ checks pass. The CI pipeline runs your unit tests automatically on every PR.
+In Azure DevOps → Repos → Pull Requests → New PR. Source: `feature/NB-04-silver-staff` → Target: `develop`. Assign the consultancy manager as reviewer. PR description: what changed, why, which DQ checks pass. The CI pipeline runs your unit tests automatically on every PR.
 
 **↓**
 
@@ -89,7 +89,7 @@ The moment the PR is merged to `develop`, UNIV-TEST workspace — which is conne
 **↓**
 
 ### Step 4 — Raise a Pull Request: develop → main `manual approval`
-Source: `develop` → Target: `main`. This PR requires approval from the PwC Data Lead (not just the manager). Attach: test run results, DQ scorecard, confirmation of UAT sign-off. No notebook goes to PROD without this gate.
+Source: `develop` → Target: `main`. This PR requires approval from the consultancy Data Lead (not just the manager). Attach: test run results, DQ scorecard, confirmation of UAT sign-off. No notebook goes to PROD without this gate.
 
 **↓**
 
@@ -180,7 +180,7 @@ For anonymisation: run a one-time PySpark notebook that reads the shortcut, mask
 | **Architecture Decision Log** | Why we chose Option 1 (3 Lakehouses), why watermark CDC, why Direct Lake. Each decision has a date, options considered, and rationale. | Git (/docs/architecture_decision_log.md) |
 | **Runbook (operational guide)** | Daily checklist, troubleshooting guide, how to restart a failed pipeline, how to roll back. Written for whoever operates the platform day-to-day. | Confluence (also in Git /docs/runbook.md) |
 | **DQ Log (live)** | Every DQ check result written by NB_07. Queryable as a Delta table. Feeds the Power BI DQ Monitor page. | Lakehouse (Silver_Lakehouse.dq_log) |
-| **Weekly Status Report** | Friday update to PwC manager: completed, in progress, blockers. One page. Sent via Teams/email. | SharePoint (PwC project folder) |
+| **Weekly Status Report** | Friday update to the consultancy manager: completed, in progress, blockers. One page. Sent via Teams/email. | SharePoint (the consultancy project folder) |
 | **JIRA / Sprint board** | All work items, user stories, bugs, scope change requests. Every feature branch name references a JIRA ticket (e.g. feature/UNIV-42-silver-staff). | JIRA (linked to Azure DevOps PRs) |
 | **Stakeholder meeting notes** | Discovery sessions with doctors, training managers, IT. Requirements captured, open questions, decisions made. | Confluence (per-meeting page, linked to sprint) |
 | **Sensitivity label policy** | Which columns carry which label, who approved, GDPR legal basis. Signed off by Data Steward. | Purview (UNIV-GOVERNANCE workspace) |

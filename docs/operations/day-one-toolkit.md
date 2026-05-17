@@ -1,4 +1,4 @@
-# Complete Day-One Toolkit — PwC Contract Start
+# Complete Day-One Toolkit — Contract Start
 
 > Weekly status report template, 6-month project timeline, bronze layer data verification approach, and pre-start checklist.
 
@@ -25,7 +25,7 @@ Here is my week 1 summary for the university data platform engagement.
 
 COMPLETED THIS WEEK
 ─────────────────────────────────────────
-• Onboarded to PwC systems, tools, and project context
+• Onboarded to the consultancy systems, tools, and project context
 • Attended kickoff and stakeholder introduction meetings
 • Reviewed all available documentation and existing source files
 • Completed initial source inventory — identified 5 Excel sources across 3 departments and 1 REST API (LMS system)
@@ -53,7 +53,7 @@ BLOCKERS / DECISIONS NEEDED
 Happy to discuss any of the above. Have a great weekend.
 
 Shajeeb S
-Senior Data Analyst | PwC (Contract)
+Senior Data Analyst | the consultancy (Contract)
 ```
 
 ---
@@ -98,7 +98,7 @@ METRICS THIS WEEK
 [Optional: one sentence on anything notable — good or bad]
 
 Shajeeb S
-Senior Data Analyst | PwC (Contract)
+Senior Data Analyst | the consultancy (Contract)
 ```
 
 > **Note:** The metrics section becomes available once pipelines are running (from about week 4 onwards). Before that, replace it with "Setup progress: DEV ✓ / TEST — / PROD —" so the manager always has a visual indicator of where things stand.
@@ -133,7 +133,7 @@ Senior Data Analyst | PwC (Contract)
 | **Week 14–15** | UAT — stakeholders test reports against known data | University training manager, medical director, and IT review TEST environment. Each verifies their report numbers against their known source data. UAT sign-off document produced. |
 | **Week 16–17** | Governance — Purview, RBAC, sensitivity labels, DDM | Purview scanning all workspaces. Sensitivity labels applied to all PII columns. Dynamic Data Masking on Gold Warehouse. RBAC groups assigned. GDPR audit evidence report generated in UNIV-GOVERNANCE. |
 | **Week 18–20** | Production deployment + monitoring live | Full platform promoted to UNIV-PROD via Fabric Deployment Pipeline. All scheduled triggers activated. NB_08 monitoring running every 30 min. Reflex alerts configured for Teams. Smoke test pipeline passing. All 5 Power BI reports live. |
-| **Week 21–24** | Hypercare, runbook, handover & extension planning | Two weeks of hypercare — daily monitoring, rapid fix of any production issues. Runbook completed. University IT staff trained on platform operation. Architecture documentation finalised. Extension conversation with PwC manager about Phase 2 scope. |
+| **Week 21–24** | Hypercare, runbook, handover & extension planning | Two weeks of hypercare — daily monitoring, rapid fix of any production issues. Runbook completed. University IT staff trained on platform operation. Architecture documentation finalised. Extension conversation with the consultancy manager about Phase 2 scope. |
 
 > ⚠️ **Buffer weeks:** weeks 7, 13, and 17 are intentionally lighter. Do not fill them with extra scope — they exist to absorb delays from stakeholder sign-offs, access requests, and API issues that always take longer than expected in a university environment.
 
@@ -173,7 +173,7 @@ A basic Power BI report page — one table per entity — showing the cleansed S
 
 **Gold — formal UAT sign-off document**
 
-Prepare a one-page UAT sign-off sheet with 10 spot-check numbers — specific counts or totals the business can verify against their own records. Example: "Total active enrolments in Semester 1 2024/25 = 1,204 — verified by Training Manager [name] on [date]." Get this signed (or emailed confirmation) before PROD deployment. This protects both you and PwC if anyone later questions the numbers.
+Prepare a one-page UAT sign-off sheet with 10 spot-check numbers — specific counts or totals the business can verify against their own records. Example: "Total active enrolments in Semester 1 2024/25 = 1,204 — verified by Training Manager [name] on [date]." Get this signed (or emailed confirmation) before PROD deployment. This protects both you and the consultancy if anyone later questions the numbers.
 
 | ✅ What business users should see | ❌ What business users should never see |
 |---|---|
@@ -191,12 +191,12 @@ Prepare a one-page UAT sign-off sheet with 10 spot-check numbers — specific co
 ### Complete before your first day — tick each off
 
 **Tools & access**
-- [ ] Set up Microsoft Teams (PwC tenant)
+- [ ] Set up Microsoft Teams (the consultancy tenant)
 - [ ] Set up Azure DevOps account
 - [ ] Install VS Code with Python extension
 - [ ] Install Azure Data Studio
 - [ ] Create a Fabric trial workspace for personal practice
-- [ ] Request JIRA / Confluence access from PwC manager
+- [ ] Request JIRA / Confluence access from the consultancy manager
 
 **Knowledge prep**
 - [ ] Re-read the full implementation guide document
@@ -219,9 +219,9 @@ Prepare a one-page UAT sign-off sheet with 10 spot-check numbers — specific co
 - [ ] Set a recurring Friday 4:00pm calendar reminder — "Write status report"
 - [ ] Set up a private notes document to log decisions, blockers, and meeting notes
 
-### Questions to ask PwC before day one
+### Questions to ask the consultancy before day one
 
-Email or message your PwC manager this week — not on day one — and ask:
+Email or message your manager this week — not on day one — and ask:
 
 1. **What tools will I be using day-to-day — Teams, JIRA, Confluence, Azure DevOps? Can I get credentials set up before I start?**
 
@@ -253,11 +253,11 @@ The university will have a data retention policy — how long student records, m
 
 ### 4. What happens to the platform when your contract ends?
 
-This is uncomfortable to think about before you start, but critical. Who at the university or PwC will operate the platform after you leave? If nobody has the skills to run it, either you train someone during the engagement (the right answer), or the platform dies within months of your departure. Identify the person who will own it operationally and build them into your documentation and training plan from week one. This also makes the extension conversation easier — "I want to stay to ensure proper handover."
+This is uncomfortable to think about before you start, but critical. Who at the university or the consultancy will operate the platform after you leave? If nobody has the skills to run it, either you train someone during the engagement (the right answer), or the platform dies within months of your departure. Identify the person who will own it operationally and build them into your documentation and training plan from week one. This also makes the extension conversation easier — "I want to stay to ensure proper handover."
 
 ### 5. How do you handle student or medical data under GDPR for a university in Ireland?
 
-Ireland's Data Protection Commission is strict. University data containing student records falls under GDPR Article 6 (lawful basis for processing). Medical/clinical data falls under Article 9 (special category data) and requires explicit additional safeguards. The university must have a lawful basis documented for every data processing activity you build. Ask for their Data Processing Register in week one — if it does not exist, flag it to the PwC manager immediately as a governance risk.
+Ireland's Data Protection Commission is strict. University data containing student records falls under GDPR Article 6 (lawful basis for processing). Medical/clinical data falls under Article 9 (special category data) and requires explicit additional safeguards. The university must have a lawful basis documented for every data processing activity you build. Ask for their Data Processing Register in week one — if it does not exist, flag it to the consultancy manager immediately as a governance risk.
 
 ### 6. What if the REST API specs change during the project?
 
@@ -269,7 +269,7 @@ Almost certainly yes. The training manager is probably sending a manually compil
 
 ### 8. What is your escalation path if you are blocked for more than 2 days?
 
-Define this with your PwC manager in week one: if you are waiting for an API credential, a SharePoint access request, or a stakeholder decision for more than 2 business days, what do you do? Who do you escalate to? On a 6-month contract, 5 days of blocked time is nearly 1% of your entire engagement. Have an agreed escalation process so you are never sitting idle while waiting for someone to action a request.
+Define this with your manager in week one: if you are waiting for an API credential, a SharePoint access request, or a stakeholder decision for more than 2 business days, what do you do? Who do you escalate to? On a 6-month contract, 5 days of blocked time is nearly 1% of your entire engagement. Have an agreed escalation process so you are never sitting idle while waiting for someone to action a request.
 
 ### 9. What does the third-party system actually contain — and can it be fully replaced long term?
 

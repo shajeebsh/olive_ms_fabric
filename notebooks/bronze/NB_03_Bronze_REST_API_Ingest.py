@@ -1,6 +1,9 @@
 # NB_03_Bronze_REST_API_Ingest
 # Layer: Bronze
 # Purpose: Resilient REST API ingestion using watermark CDC, retries, token caching, and api_call_log.
+#
+# DEPRECATED: Use NB_02_Bronze_All_Sources_Ingest instead.
+# This notebook is preserved for reference and backward compatibility.
 
 import json
 import traceback
