@@ -8,8 +8,8 @@ These `.py` files are notebook-ready starter scripts. In Fabric, create notebook
 | --- | --- | --- |
 | 00 | `bronze/NB_00_Data_Profiling.py` | Profile incoming source files and API samples in DEV |
 | 01 | `ops/NB_01_Create_Control_Tables.py` | Create control, registry, DQ, and monitoring tables |
-| 02 | `bronze/NB_02_Bronze_Excel_Ingest.py` | Ingest duplicate-safe Excel files to Bronze and log schema drift |
-| 03 | `bronze/NB_03_Bronze_REST_API_Ingest.py` | Ingest REST API data using watermark CDC, retries, token caching, and API call logging |
+| 02 | `bronze/NB_02_Bronze_All_Sources_Ingest.py` | Unified ingestion via connector framework — Excel, CSV, REST API, and platform connectors |
+| 03 | _(merged into NB_02)_ | Previously separate Excel and REST API notebooks |
 | 04 | `silver/NB_04_Silver_Training_Enrolments.py` | Transform Bronze training enrolments to Silver |
 | 05 | `silver/NB_05_Bronze_to_Silver_Streaming.py` | Micro-batch Bronze to Silver processing using Delta CDF |
 | 06 | `gold/NB_06_Gold_Dimensional_Model.py` | Build Gold dimensions and facts |

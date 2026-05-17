@@ -99,6 +99,6 @@ Use `Gold_Warehouse` when SQL-native consumers need stored procedures, T-SQL vie
 | Silver table | `silver_<entity>` | `silver_training_enrolments` |
 | Gold dimension | `dim_<entity>` | `dim_student` |
 | Gold fact | `fact_<process>` | `fact_training_completion` |
-| Pipeline | `PL_<Layer>_<Purpose>` | `PL_Bronze_Excel_Ingest` |
-| Notebook | `NB_<NN>_<Purpose>` | `NB_04_Silver_Transformation` |
+| Pipeline | `PL_<Layer>_<Purpose>` | `PL_Daily_Bronze` |
+| Notebook | `NB_<NN>_<Purpose>` | `NB_04_Silver_Training_Enrolments` |
 

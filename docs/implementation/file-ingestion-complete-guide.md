@@ -130,7 +130,7 @@ Giving business users (doctors, training managers) direct access to upload to Fi
 
 2. **Power Automate copies to Fabric Files/landing/ immediately** — Flow trigger: "When a file is created or modified in SharePoint folder /DataUploads/Training/" → Action: Copy file to Fabric Lakehouse Files/landing/training/ using the Fabric connector. This happens within seconds of the upload — no waiting for a nightly pipeline.
 
-3. **ADF pipeline polls landing/ and triggers ingestion** — ADF pipeline PL_Bronze_Excel_Ingest runs on schedule (hourly or nightly). It scans Files/landing/ for new files, runs duplicate detection, loads to Bronze, moves processed files. Client sees nothing of this — they only care that their SharePoint upload was acknowledged.
+3. **Fabric pipeline polls landing/ and triggers ingestion** — Fabric pipeline PL_Daily_Bronze runs on schedule (hourly or nightly). It runs NB_02_Bronze_All_Sources_Ingest which auto-discovers file connectors, runs duplicate detection, loads to Bronze, moves processed files. Client sees nothing of this — they only care that their SharePoint upload was acknowledged.
 
 4. **Automated confirmation email back to the uploader** — After a successful Bronze load, Power Automate sends a confirmation email: "Your file training_enrolments_may.xlsx was successfully processed — 1,247 rows loaded on 11 May 2025 at 09:14." If it failed: "Your file could not be processed — the date column contains an unrecognised format. Please contact data-team@university.ie." This closes the loop for the client without requiring them to log into anything.
 
@@ -151,9 +151,9 @@ This gives you: the source system from the name, the period the data covers, a n
 ### Complete duplicate-safe ingestion notebook
 
 ```python
-# NB_02_Bronze_Excel_Ingest_v2.ipynb
-# Handles: duplicate detection, file registry, move after load,
-# naming convention enforcement, correction detection
+# NB_02_Bronze_All_Sources_Ingest.ipynb
+# Handles: unified ingestion via connector framework — Excel, CSV, REST API, platform,
+# and social connectors with auto-discovery, duplicate detection, and audit logging
 
 import hashlib, uuid, shutil, re
 from datetime import datetime
