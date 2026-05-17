@@ -14,5 +14,16 @@
   },
   "warehouse": "Gold_Warehouse",
   "data_policy": "synthetic_or_anonymised_only",
-  "schedule_enabled": false
+  "schedule_enabled": false,
+  "connectors": {
+    "enabled": [
+      "excel_training",
+      "excel_medical",
+      "excel_hr",
+      "excel_facilities",
+      "csv_import",
+      "rest_api_lms",
+      "rest_api_hr"
+    ]
+  }
 }

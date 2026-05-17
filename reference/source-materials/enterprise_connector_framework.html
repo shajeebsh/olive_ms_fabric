@@ -1,0 +1,843 @@
+
+<h2 class="sr-only">Complete enterprise connector framework for Microsoft Fabric covering all 15 source types with implementation patterns, code examples, and the BaseConnector architecture.</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;padding:1rem 0 1.25rem}
+.tab{padding:5px 14px;border-radius:20px;border:0.5px solid var(--color-border-secondary);font-size:12px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:10px}
+.card-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:6px}
+.card-body{font-size:12px;color:var(--color-text-secondary);line-height:1.7}
+.section-label{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.06em;margin:1.25rem 0 8px}
+.code{font-family:var(--font-mono);font-size:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;margin:6px 0;line-height:1.9;white-space:pre-wrap;border:0.5px solid var(--color-border-tertiary);overflow-x:auto}
+.code .cm{color:var(--color-text-tertiary)}
+.code .kw{color:var(--color-text-info);font-weight:500}
+.code .st{color:var(--color-text-success)}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap;margin:2px}
+.b-file{background:#FAEEDA;color:#633806}
+.b-api{background:#E6F1FB;color:#0C447C}
+.b-platform{background:#EDE9FE;color:#3C3489}
+.b-social{background:#E1F5EE;color:#085041}
+.b-internal{background:#FAECE7;color:#712B13}
+.b-new{background:#EDE9FE;color:#3C3489}
+.b-exists{background:#EAF3DE;color:#27500A}
+.source-row{display:grid;grid-template-columns:180px 1fr 100px;gap:10px;padding:8px 10px;border-bottom:0.5px solid var(--color-border-tertiary);align-items:center;font-size:12px}
+.source-row:last-child{border-bottom:none}
+.source-name{font-weight:500;color:var(--color-text-primary)}
+.source-desc{color:var(--color-text-secondary);line-height:1.5}
+.info-box{background:var(--color-background-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-info);line-height:1.6;margin:10px 0}
+.warn-box{background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;font-size:12px;color:var(--color-text-warning);line-height:1.6;margin:10px 0}
+.step-row{display:grid;grid-template-columns:28px 1fr;gap:10px;margin-bottom:12px;align-items:start}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--color-background-info);color:var(--color-text-info);font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-content{font-size:13px;color:var(--color-text-secondary);line-height:1.7}
+.step-title{font-weight:500;color:var(--color-text-primary);display:block;margin-bottom:2px}
+</style>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('arch',this)">Architecture</div>
+  <div class="tab" onclick="show('base',this)">BaseConnector</div>
+  <div class="tab" onclick="show('file',this)">File sources</div>
+  <div class="tab" onclick="show('api',this)">API & webhooks</div>
+  <div class="tab" onclick="show('platform',this)">Platform connectors</div>
+  <div class="tab" onclick="show('social',this)">Social & marketing</div>
+  <div class="tab" onclick="show('registry',this)">Registry & pipeline</div>
+</div>
+
+<!-- ARCHITECTURE -->
+<div id="arch" class="panel active">
+<div class="section-label">Source inventory — all 15 types, category, and what changes vs what stays the same</div>
+<div class="card" style="padding:0;overflow:hidden">
+<div class="source-row" style="background:var(--color-background-secondary)">
+  <span style="font-size:11px;font-weight:500;color:var(--color-text-secondary)">Source</span>
+  <span style="font-size:11px;font-weight:500;color:var(--color-text-secondary)">Connector type needed</span>
+  <span style="font-size:11px;font-weight:500;color:var(--color-text-secondary)">Status</span>
+</div>
+<div class="source-row"><div><div class="source-name">Excel files</div></div><div class="source-desc">FileConnector — crealytics spark-excel, landing zone, MD5 registry</div><span class="badge b-exists">Exists</span></div>
+<div class="source-row"><div><div class="source-name">CSV import/export</div></div><div class="source-desc">FileConnector — spark.read.csv with schema inference guard, same landing zone</div><span class="badge b-new">Extend</span></div>
+<div class="source-row"><div><div class="source-name">REST API</div></div><div class="source-desc">RestApiConnector — watermark CDC, pagination, OAuth2, circuit breaker</div><span class="badge b-exists">Exists</span></div>
+<div class="source-row"><div><div class="source-name">SOAP / Web services</div></div><div class="source-desc">SoapConnector — zeep library, WSDL parsing, XML → JSON flatten before Bronze</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">Webhooks</div></div><div class="source-desc">WebhookConnector — Fabric Eventstream receiver endpoint, schema-on-read Bronze</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">Microsoft Dynamics</div></div><div class="source-desc">DynamicsConnector — OData v4 REST API, AAD auth, delta token CDC</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">AWS DataHub</div></div><div class="source-desc">AwsConnector — boto3 S3/Glue, cross-account IAM role, Parquet → Delta convert</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">AWS HubSpot</div></div><div class="source-desc">HubSpotConnector — HubSpot REST API v3, private app token, cursor-based pagination</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">Ghost Inspector</div></div><div class="source-desc">GhostInspectorConnector — REST API, test suite results, run history ingestion</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">Quercus sync</div></div><div class="source-desc">QuercusConnector — automated sync via REST or DB direct, student record ingestion</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">TLMF user portal</div></div><div class="source-desc">TlmfConnector — portal API or scheduled export, user activity + enrolment data</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">MS Power Pages</div></div><div class="source-desc">PowerPagesConnector — Dataverse REST API (OData), AAD auth, form submission data</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">Social media</div></div><div class="source-desc">SocialConnector — platform APIs (Meta Graph, LinkedIn, X/Twitter v2), rate limit handling</div><span class="badge b-new">New</span></div>
+<div class="source-row"><div><div class="source-name">Mailchimp</div></div><div class="source-desc">MailchimpConnector — Mailchimp Marketing API v3, campaign + member data, offset pagination</div><span class="badge b-new">New</span></div>
+</div>
+
+<div class="section-label">The key design principle</div>
+<div class="card">
+  <div class="card-title">Every connector does three things — extract, audit, land. Nothing else.</div>
+  <div class="card-body">The connector's job stops at Bronze. It extracts raw data from the source, adds four audit columns (_ingested_at, _source_system, _batch_id, _connector_type), and lands it in Bronze as Delta. All transformation, validation, and business logic happens in Silver and beyond. This keeps connectors small, testable, and replaceable.</div>
+</div>
+
+<div class="section-label">New project structure</div>
+<div class="code">src/
+├── connectors/
+│   ├── __init__.py
+│   ├── base.py                  ← BaseConnector ABC
+│   ├── registry.py              ← ConnectorRegistry — auto-discovers all connectors
+│   ├── file/
+│   │   ├── excel_connector.py   ← existing, refactored to extend BaseConnector
+│   │   └── csv_connector.py     ← new
+│   ├── api/
+│   │   ├── rest_connector.py    ← existing, refactored
+│   │   ├── soap_connector.py    ← new
+│   │   └── webhook_connector.py ← new
+│   ├── platform/
+│   │   ├── dynamics_connector.py
+│   │   ├── aws_connector.py
+│   │   ├── hubspot_connector.py
+│   │   ├── ghost_inspector_connector.py
+│   │   ├── quercus_connector.py
+│   │   ├── tlmf_connector.py
+│   │   └── power_pages_connector.py
+│   └── social/
+│       ├── mailchimp_connector.py
+│       └── social_media_connector.py</div>
+</div>
+
+<!-- BASE CONNECTOR -->
+<div id="base" class="panel">
+<div class="section-label">src/connectors/base.py — the contract every connector must fulfil</div>
+<div class="code"><span class="cm"># src/connectors/base.py</span>
+<span class="cm"># Every connector extends this. The pipeline calls .run() on any connector</span>
+<span class="cm"># without knowing what type of source it is.</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> typing <span class="kw">import</span> Any
+<span class="kw">import</span> uuid
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> current_timestamp, lit
+
+
+@dataclass
+<span class="kw">class</span> ConnectorResult:
+    source_system: str
+    batch_id:      str
+    rows_written:  int
+    status:        str           <span class="cm"># SUCCESS / FAILED / SKIPPED</span>
+    error:         str | None = None
+    metadata:      dict = field(default_factory=dict)
+
+
+<span class="kw">class</span> BaseConnector(ABC):
+    <span class="st">"""
+    All connectors extend this.
+    Pipeline calls: result = connector.run(spark, config)
+    Connector must:
+      1. Extract raw data from source
+      2. Add 5 audit columns
+      3. Write append-only to Bronze Delta table
+      4. Register in file_ingestion_registry (file sources)
+         or control_watermark (API sources)
+      5. Return a ConnectorResult
+    Connector must NOT:
+      - Cast types or apply business rules (that is Silver's job)
+      - Raise exceptions silently (always return FAILED result)
+      - Write anywhere except Bronze
+    """</span>
+
+    <span class="cm"># Set these in every subclass</span>
+    connector_type: str = <span class="st">"base"</span>
+    source_system:  str = <span class="st">"unknown"</span>
+
+    @abstractmethod
+    <span class="kw">def</span> extract(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+        batch_id: str,
+    ) -> DataFrame:
+        <span class="st">"""Pull raw data from source. Return a Spark DataFrame."""</span>
+        ...
+
+    <span class="kw">def</span> _add_audit_cols(
+        self, df: DataFrame, batch_id: str
+    ) -> DataFrame:
+        <span class="st">"""Standard audit columns appended to every Bronze row."""</span>
+        <span class="kw">return</span> (
+            df
+            .withColumn(<span class="st">"_ingested_at"</span>,    current_timestamp())
+            .withColumn(<span class="st">"_source_system"</span>,  lit(self.source_system))
+            .withColumn(<span class="st">"_connector_type"</span>, lit(self.connector_type))
+            .withColumn(<span class="st">"_batch_id"</span>,       lit(batch_id))
+            .withColumn(<span class="st">"_schema_version"</span>, lit(<span class="st">"1.0"</span>))
+        )
+
+    <span class="kw">def</span> run(
+        self,
+        spark: SparkSession,
+        config: dict[str, Any],
+    ) -> ConnectorResult:
+        <span class="st">"""Orchestrates extract → audit → land. Never override this."""</span>
+        <span class="kw">from</span> src.config_loader <span class="kw">import</span> lakehouse_table
+        batch_id  = str(uuid.uuid4())
+        target    = lakehouse_table(
+            config, <span class="st">"bronze"</span>, f<span class="st">"bronze_{self.source_system}"</span>
+        )
+        <span class="kw">try</span>:
+            df_raw    = self.extract(spark, config, batch_id)
+            <span class="kw">if</span> df_raw <span class="kw">is</span> None <span class="kw">or</span> df_raw.rdd.isEmpty():
+                <span class="kw">return</span> ConnectorResult(
+                    self.source_system, batch_id, 0, <span class="st">"SKIPPED"</span>
+                )
+            df_bronze = self._add_audit_cols(df_raw, batch_id)
+            df_bronze.write.format(<span class="st">"delta"</span>).mode(<span class="st">"append"</span>) \
+                .option(<span class="st">"mergeSchema"</span>, <span class="st">"true"</span>) \
+                .saveAsTable(target)
+            rows = df_bronze.count()
+            <span class="kw">return</span> ConnectorResult(
+                self.source_system, batch_id, rows, <span class="st">"SUCCESS"</span>
+            )
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="kw">return</span> ConnectorResult(
+                self.source_system, batch_id, 0,
+                <span class="st">"FAILED"</span>, error=str(e)
+            )</div>
+
+<div class="section-label">src/connectors/registry.py — auto-discovers and runs all connectors</div>
+<div class="code"><span class="cm"># src/connectors/registry.py</span>
+<span class="kw">import</span> importlib, pkgutil
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector, ConnectorResult
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> SparkSession
+
+
+<span class="kw">class</span> ConnectorRegistry:
+    <span class="st">"""Auto-discovers every BaseConnector subclass and runs them."""</span>
+
+    <span class="kw">def</span> __init__(self):
+        self._connectors: dict[str, BaseConnector] = {}
+        self._auto_discover()
+
+    <span class="kw">def</span> _auto_discover(self):
+        <span class="cm"># Walk the connectors package and import every module</span>
+        <span class="kw">import</span> src.connectors <span class="kw">as</span> pkg
+        <span class="kw">for</span> _finder, name, _ispkg <span class="kw">in</span> pkgutil.walk_packages(
+            pkg.__path__, prefix=pkg.__name__ + <span class="st">"."</span>
+        ):
+            importlib.import_module(name)
+        <span class="cm"># Register all BaseConnector subclasses</span>
+        <span class="kw">for</span> cls <span class="kw">in</span> BaseConnector.__subclasses__():
+            inst = cls()
+            self._connectors[inst.source_system] = inst
+
+    <span class="kw">def</span> register(self, connector: BaseConnector):
+        self._connectors[connector.source_system] = connector
+
+    <span class="kw">def</span> run_all(
+        self,
+        spark: SparkSession,
+        config: dict,
+        only: list[str] | None = None,
+    ) -> list[ConnectorResult]:
+        results = []
+        <span class="kw">for</span> name, connector <span class="kw">in</span> self._connectors.items():
+            <span class="kw">if</span> only <span class="kw">and</span> name <span class="kw">not in</span> only:
+                <span class="kw">continue</span>
+            print(f<span class="st">"Running connector: {name}"</span>)
+            result = connector.run(spark, config)
+            print(f<span class="st">"  {result.status}: {result.rows_written} rows"</span>)
+            results.append(result)
+        <span class="kw">return</span> results
+
+    <span class="kw">def</span> summary(self, results: list[ConnectorResult]) -> dict:
+        <span class="kw">return</span> {
+            <span class="st">"total"</span>:   len(results),
+            <span class="st">"success"</span>: sum(1 <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if</span> r.status == <span class="st">"SUCCESS"</span>),
+            <span class="st">"failed"</span>:  sum(1 <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if</span> r.status == <span class="st">"FAILED"</span>),
+            <span class="st">"skipped"</span>: sum(1 <span class="kw">for</span> r <span class="kw">in</span> results <span class="kw">if</span> r.status == <span class="st">"SKIPPED"</span>),
+            <span class="st">"rows"</span>:    sum(r.rows_written <span class="kw">for</span> r <span class="kw">in</span> results),
+        }</div>
+</div>
+
+<!-- FILE SOURCES -->
+<div id="file" class="panel">
+<div class="section-label">CSV connector — extends the existing Excel pattern</div>
+<div class="code"><span class="cm"># src/connectors/file/csv_connector.py</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+<span class="kw">from</span> src.file_ingestion <span class="kw">import</span> (
+    md5_of_file, registry_action, register_file, move_file
+)
+<span class="kw">from</span> src.filesystem <span class="kw">import</span> get_filesystem
+<span class="kw">import</span> re, uuid
+
+
+FILE_PATTERN = re.compile(
+    r<span class="st">'^[a-z_]+_\d{4}_(0[1-9]|1[0-2])\.csv$'</span>
+)
+
+<span class="kw">class</span> CsvConnector(BaseConnector):
+    connector_type = <span class="st">"file_csv"</span>
+    source_system  = <span class="st">"csv_import"</span>
+    landing_path   = <span class="st">"Files/landing/csv/"</span>
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        fs    = get_filesystem()
+        files = [f <span class="kw">for</span> f <span class="kw">in</span> fs.ls(self.landing_path)
+                 <span class="kw">if</span> f.name.endswith(<span class="st">".csv"</span>)]
+        <span class="kw">if not</span> files:
+            <span class="kw">return</span> None
+
+        dfs = []
+        <span class="kw">for</span> f <span class="kw">in</span> files:
+            <span class="kw">if not</span> FILE_PATTERN.match(f.name):
+                register_file(spark, config, f.name, f.path,
+                    f.size, <span class="st">""</span>, self.source_system,
+                    <span class="st">"FAILED"</span>, batch_id, error=<span class="st">"Invalid filename"</span>)
+                move_file(fs, f.path, <span class="st">"rejected"</span>)
+                <span class="kw">continue</span>
+            file_hash = md5_of_file(fs, f.path)
+            action    = registry_action(spark, config, f.name, file_hash)
+            <span class="kw">if</span> action == <span class="st">"DUPLICATE"</span>:
+                register_file(spark, config, f.name, f.path, f.size,
+                    file_hash, self.source_system, <span class="st">"DUPLICATE"</span>, batch_id)
+                move_file(fs, f.path, <span class="st">"rejected"</span>)
+                <span class="kw">continue</span>
+            <span class="cm"># CSV-specific options: auto-detect separator, handle BOM</span>
+            df = (
+                spark.read
+                .option(<span class="st">"header"</span>,        <span class="st">"true"</span>)
+                .option(<span class="st">"inferSchema"</span>,    <span class="st">"false"</span>)   <span class="cm"># all strings in Bronze</span>
+                .option(<span class="st">"sep"</span>,           <span class="st">","</span>)        <span class="cm"># change to ";" for EU CSVs</span>
+                .option(<span class="st">"encoding"</span>,      <span class="st">"UTF-8"</span>)
+                .option(<span class="st">"multiLine"</span>,     <span class="st">"true"</span>)    <span class="cm"># handles quoted newlines</span>
+                .option(<span class="st">"escape"</span>,        <span class="st">'"'</span>)
+                .option(<span class="st">"nullValue"</span>,     <span class="st">""</span>)
+                .csv(f.path)
+            )
+            register_file(spark, config, f.name, f.path, f.size,
+                file_hash, self.source_system, <span class="st">"SUCCESS"</span>, batch_id, df.count())
+            move_file(fs, f.path, <span class="st">"processed"</span>)
+            dfs.append(df)
+
+        <span class="kw">if not</span> dfs:
+            <span class="kw">return</span> None
+        result = dfs[0]
+        <span class="kw">for</span> d <span class="kw">in</span> dfs[1:]:
+            result = result.unionByName(d, allowMissingColumns=True)
+        <span class="kw">return</span> result</div>
+
+<div class="warn-box">EU CSV files use semicolon (;) as separator and comma as decimal point. Add a config flag <code>csv_separator</code> per source to handle both formats. Detect automatically by reading the first row and checking whether commas or semicolons are more frequent.</div>
+</div>
+
+<!-- API & WEBHOOKS -->
+<div id="api" class="panel">
+<div class="section-label">SOAP connector — uses the zeep library</div>
+<div class="code"><span class="cm"># src/connectors/api/soap_connector.py</span>
+<span class="cm"># SOAP sources expose a WSDL. We call the service,</span>
+<span class="cm"># receive XML, convert to dict, then to Spark DataFrame.</span>
+<span class="kw">import</span> json
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+<span class="kw">from</span> src.secrets <span class="kw">import</span> get_secrets
+
+
+<span class="kw">class</span> SoapConnector(BaseConnector):
+    connector_type = <span class="st">"soap"</span>
+    source_system  = <span class="st">"soap_webservice"</span>
+
+    <span class="cm"># Override per-service: WSDL URL, operation name, auth</span>
+    wsdl_url:    str = <span class="st">""</span>
+    operation:   str = <span class="st">""</span>
+    secret_key:  str = <span class="st">""</span>
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        <span class="kw">from</span> zeep <span class="kw">import</span> Client
+        <span class="kw">from</span> zeep.transports <span class="kw">import</span> Transport
+        <span class="kw">from</span> requests import Session
+        <span class="kw">from</span> zeep.helpers <span class="kw">import</span> serialize_object
+
+        secrets = get_secrets()
+        token   = secrets.get(config[<span class="st">"secret_scope"</span>], self.secret_key)
+
+        session = Session()
+        session.headers.update({<span class="st">"Authorization"</span>: f<span class="st">"Bearer {token}"</span>})
+        transport = Transport(session=session)
+        client    = Client(wsdl=self.wsdl_url, transport=transport)
+
+        <span class="cm"># Call the SOAP operation — returns a zeep object</span>
+        response = getattr(client.service, self.operation)()
+
+        <span class="cm"># Convert zeep object → plain dict → JSON → Spark DataFrame</span>
+        raw_dict = serialize_object(response, target_cls=dict)
+        records  = raw_dict <span class="kw">if</span> isinstance(raw_dict, list) <span class="kw">else</span> [raw_dict]
+
+        <span class="kw">if not</span> records:
+            <span class="kw">return</span> None
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) <span class="kw">for</span> r <span class="kw">in</span> records]
+        )
+        df = spark.read.json(rdd)
+        <span class="kw">from</span> src.api_ingestion <span class="kw">import</span> flatten_struct_cols
+        <span class="kw">return</span> flatten_struct_cols(df)</div>
+
+<div class="section-label">Webhook connector — receives pushed events via Fabric Eventstream</div>
+<div class="code"><span class="cm"># src/connectors/api/webhook_connector.py</span>
+<span class="cm"># Webhooks push data TO us. We don't poll — we receive.</span>
+<span class="cm"># Pattern: Fabric Eventstream captures the webhook POST,</span>
+<span class="cm"># lands events in bronze_webhook_events Delta table.</span>
+<span class="cm"># This connector reads that table and moves to the correct Bronze target.</span>
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> col
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+
+
+<span class="kw">class</span> WebhookConnector(BaseConnector):
+    connector_type  = <span class="st">"webhook"</span>
+    source_system   = <span class="st">"webhook"</span>
+    event_table:str = <span class="st">"Bronze_Lakehouse.bronze_webhook_events"</span>
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        <span class="cm"># Read only events not yet processed (no _batch_id assigned)</span>
+        df = spark.table(self.event_table).filter(
+            col(<span class="st">"_batch_id"</span>).isNull()
+        )
+        <span class="kw">if</span> df.rdd.isEmpty():
+            <span class="kw">return</span> None
+
+        <span class="cm"># Flatten the JSON payload column if events arrive as JSON strings</span>
+        <span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> from_json, schema_of_json
+        sample = df.select(<span class="st">"payload"</span>).limit(1).first()[<span class="st">"payload"</span>]
+        schema = schema_of_json(sample)
+        df = df.withColumn(<span class="st">"payload_parsed"</span>, from_json(col(<span class="st">"payload"</span>), schema))
+        <span class="kw">for</span> field_name <span class="kw">in</span> df.select(<span class="st">"payload_parsed.*"</span>).columns:
+            df = df.withColumn(field_name, col(f<span class="st">"payload_parsed.{field_name}"</span>))
+        <span class="kw">return</span> df.drop(<span class="st">"payload_parsed"</span>)
+
+<span class="cm"># Fabric Eventstream setup (UI, not code):</span>
+<span class="cm"># UNIV-PROD → + New → Eventstream → Source: Custom endpoint</span>
+<span class="cm"># → Destination: Bronze_Lakehouse.bronze_webhook_events</span>
+<span class="cm"># Share the custom endpoint URL with the third-party system.</span>
+<span class="cm"># They POST JSON to that URL. Events land in seconds.</span></div>
+</div>
+
+<!-- PLATFORM CONNECTORS -->
+<div id="platform" class="panel">
+<div class="section-label">Microsoft Dynamics connector — OData v4 with AAD auth and delta token CDC</div>
+<div class="code"><span class="cm"># src/connectors/platform/dynamics_connector.py</span>
+<span class="cm"># Dynamics 365 exposes an OData v4 REST API.</span>
+<span class="cm"># Delta tokens replace watermarks — the API remembers your position.</span>
+<span class="kw">import</span> requests, json
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+<span class="kw">from</span> src.secrets <span class="kw">import</span> get_secrets
+
+
+<span class="kw">class</span> DynamicsConnector(BaseConnector):
+    connector_type = <span class="st">"dynamics_odata"</span>
+    source_system  = <span class="st">"ms_dynamics"</span>
+    entity:str     = <span class="st">"contacts"</span>      <span class="cm"># override per entity</span>
+
+    <span class="kw">def</span> _get_aad_token(self, config: dict) -> str:
+        secrets  = get_secrets()
+        tenant   = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"dynamics-tenant-id"</span>)
+        client   = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"dynamics-client-id"</span>)
+        secret   = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"dynamics-client-secret"</span>)
+        resource = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"dynamics-resource-url"</span>)
+        resp = requests.post(
+            f<span class="st">"https://login.microsoftonline.com/{tenant}/oauth2/token"</span>,
+            data={<span class="st">"grant_type"</span>:<span class="st">"client_credentials"</span>,
+                  <span class="st">"client_id"</span>:client, <span class="st">"client_secret"</span>:secret,
+                  <span class="st">"resource"</span>:resource},
+            timeout=30
+        )
+        resp.raise_for_status()
+        <span class="kw">return</span> resp.json()[<span class="st">"access_token"</span>]
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        secrets     = get_secrets()
+        base_url    = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"dynamics-base-url"</span>)
+        token       = self._get_aad_token(config)
+        headers     = {
+            <span class="st">"Authorization"</span>: f<span class="st">"Bearer {token}"</span>,
+            <span class="st">"OData-MaxVersion"</span>: <span class="st">"4.0"</span>,
+            <span class="st">"Prefer"</span>: <span class="st">"odata.track-changes"</span>  <span class="cm"># enables delta tokens</span>
+        }
+
+        <span class="cm"># Read stored delta token from control table</span>
+        delta_token_row = spark.sql(f<span class="st">"""
+            SELECT last_batch_id FROM Bronze_Lakehouse.control_watermark
+            WHERE source_system = 'ms_dynamics_{self.entity}'
+        """</span>).first()
+        delta_token = delta_token_row[<span class="st">"last_batch_id"</span>] <span class="kw">if</span> delta_token_row <span class="kw">else</span> None
+
+        <span class="kw">if</span> delta_token:
+            url = f<span class="st">"{base_url}/api/data/v9.2/{self.entity}?$deltatoken={delta_token}"</span>
+        <span class="kw">else</span>:
+            url = f<span class="st">"{base_url}/api/data/v9.2/{self.entity}?$top=5000"</span>
+
+        all_records, next_link = [], url
+        <span class="kw">while</span> next_link:
+            resp = requests.get(next_link, headers=headers, timeout=30)
+            resp.raise_for_status()
+            data       = resp.json()
+            all_records.extend(data.get(<span class="st">"value"</span>, []))
+            next_link  = data.get(<span class="st">"@odata.nextLink"</span>)
+            <span class="cm"># Save new delta token for next run</span>
+            new_token  = data.get(<span class="st">"@odata.deltaLink"</span>, <span class="st">""</span>).split(<span class="st">"deltatoken="</span>)[-1]
+
+        <span class="kw">if not</span> all_records:
+            <span class="kw">return</span> None
+
+        <span class="cm"># Store delta token in watermark for next run</span>
+        <span class="kw">if</span> new_token:
+            spark.sql(f<span class="st">"""
+                UPDATE Bronze_Lakehouse.control_watermark
+                SET last_batch_id='{new_token}', updated_at=current_timestamp()
+                WHERE source_system='ms_dynamics_{self.entity}'
+            """</span>)
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(r) <span class="kw">for</span> r <span class="kw">in</span> all_records]
+        )
+        <span class="kw">return</span> spark.read.json(rdd)</div>
+
+<div class="section-label">AWS connector — boto3, cross-account IAM, Parquet to Delta</div>
+<div class="code"><span class="cm"># src/connectors/platform/aws_connector.py</span>
+<span class="kw">import</span> boto3, io
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+<span class="kw">from</span> src.secrets <span class="kw">import</span> get_secrets
+
+
+<span class="kw">class</span> AwsDataHubConnector(BaseConnector):
+    connector_type = <span class="st">"aws_s3"</span>
+    source_system  = <span class="st">"aws_datahub"</span>
+    s3_prefix:str  = <span class="st">"exports/"</span>   <span class="cm"># override per bucket path</span>
+
+    <span class="kw">def</span> _get_s3_client(self, config: dict):
+        secrets = get_secrets()
+        <span class="kw">return</span> boto3.client(<span class="st">"s3"</span>,
+            aws_access_key_id=secrets.get(
+                config[<span class="st">"secret_scope"</span>], <span class="st">"aws-access-key-id"</span>),
+            aws_secret_access_key=secrets.get(
+                config[<span class="st">"secret_scope"</span>], <span class="st">"aws-secret-access-key"</span>),
+            region_name=<span class="st">"eu-west-1"</span>
+        )
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        secrets    = get_secrets()
+        bucket     = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"aws-s3-bucket"</span>)
+        s3         = self._get_s3_client(config)
+        landing    = <span class="st">"Files/landing/aws/"</span>
+
+        <span class="cm"># List new files since last watermark</span>
+        wm_row = spark.sql(<span class="st">"""
+            SELECT last_run_ts FROM Bronze_Lakehouse.control_watermark
+            WHERE source_system = 'aws_datahub'
+        """</span>).first()
+        since = wm_row[<span class="st">"last_run_ts"</span>] <span class="kw">if</span> wm_row <span class="kw">else</span> None
+
+        objects  = s3.list_objects_v2(Bucket=bucket, Prefix=self.s3_prefix)
+        new_keys = []
+        <span class="kw">for</span> obj <span class="kw">in</span> objects.get(<span class="st">"Contents"</span>, []):
+            <span class="kw">if</span> since <span class="kw">is</span> None <span class="kw">or</span> obj[<span class="st">"LastModified"</span>].replace(tzinfo=None) > since:
+                new_keys.append(obj[<span class="st">"Key"</span>])
+
+        <span class="kw">if not</span> new_keys:
+            <span class="kw">return</span> None
+
+        <span class="cm"># Download files to Lakehouse Files/landing/aws/ then read</span>
+        <span class="kw">from</span> src.filesystem <span class="kw">import</span> get_filesystem
+        fs = get_filesystem()
+        fs.mkdirs(landing)
+        <span class="kw">for</span> key <span class="kw">in</span> new_keys:
+            local_name = key.replace(<span class="st">"/"</span>, <span class="st">"_"</span>)
+            s3.download_file(bucket, key, f<span class="st">"/tmp/{local_name}"</span>)
+            <span class="cm"># Copy from driver /tmp to Lakehouse Files/</span>
+            mssparkutils.fs.cp(f<span class="st">"file:///tmp/{local_name}"</span>, f<span class="st">"{landing}{local_name}"</span>)
+
+        <span class="cm"># Read Parquet (AWS typically exports Parquet)</span>
+        <span class="kw">return</span> spark.read.parquet(landing)</div>
+
+<div class="section-label">HubSpot connector — cursor-based pagination, private app token</div>
+<div class="code"><span class="cm"># src/connectors/platform/hubspot_connector.py</span>
+<span class="kw">import</span> requests, json
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+<span class="kw">from</span> src.secrets <span class="kw">import</span> get_secrets
+
+
+<span class="kw">class</span> HubSpotConnector(BaseConnector):
+    connector_type = <span class="st">"hubspot_api"</span>
+    source_system  = <span class="st">"aws_hubspot"</span>
+    object_type:str = <span class="st">"contacts"</span>  <span class="cm"># contacts / companies / deals</span>
+    properties: list = [<span class="st">"firstname"</span>,<span class="st">"lastname"</span>,<span class="st">"email"</span>,<span class="st">"hs_object_id"</span>]
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        secrets = get_secrets()
+        token   = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"hubspot-private-app-token"</span>)
+        headers = {
+            <span class="st">"Authorization"</span>: f<span class="st">"Bearer {token}"</span>,
+            <span class="st">"Content-Type"</span>:  <span class="st">"application/json"</span>
+        }
+        base    = f<span class="st">"https://api.hubapi.com/crm/v3/objects/{self.object_type}"</span>
+        props   = <span class="st">","</span>.join(self.properties)
+
+        all_records, after = [], None
+        <span class="kw">while</span> True:
+            params = {<span class="st">"limit"</span>:100, <span class="st">"properties"</span>:props}
+            <span class="kw">if</span> after:
+                params[<span class="st">"after"</span>] = after   <span class="cm"># cursor-based pagination</span>
+            resp = requests.get(base, headers=headers, params=params, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+            all_records.extend(data.get(<span class="st">"results"</span>, []))
+            paging = data.get(<span class="st">"paging"</span>, {}).get(<span class="st">"next"</span>, {})
+            after  = paging.get(<span class="st">"after"</span>)
+            <span class="kw">if not</span> after:
+                <span class="kw">break</span>
+
+        <span class="kw">if not</span> all_records:
+            <span class="kw">return</span> None
+
+        <span class="cm"># Flatten the properties dict into top-level columns</span>
+        flat = [{**r.get(<span class="st">"properties"</span>,{}), <span class="st">"id"</span>:r.get(<span class="st">"id"</span>)} <span class="kw">for</span> r <span class="kw">in</span> all_records]
+        rdd  = spark.sparkContext.parallelize([json.dumps(r) <span class="kw">for</span> r <span class="kw">in</span> flat])
+        <span class="kw">return</span> spark.read.json(rdd)</div>
+
+<div class="section-label">Power Pages / Dataverse connector — same OData pattern as Dynamics</div>
+<div class="code"><span class="cm"># src/connectors/platform/power_pages_connector.py</span>
+<span class="cm"># Power Pages stores form submissions in Dataverse (OData v4).</span>
+<span class="cm"># Identical auth and pagination pattern to DynamicsConnector.</span>
+<span class="kw">from</span> src.connectors.platform.dynamics_connector <span class="kw">import</span> DynamicsConnector
+
+
+<span class="kw">class</span> PowerPagesConnector(DynamicsConnector):
+    connector_type = <span class="st">"power_pages_dataverse"</span>
+    source_system  = <span class="st">"ms_power_pages"</span>
+    entity         = <span class="st">"cr123_formsubmissions"</span>  <span class="cm"># replace with real Dataverse entity</span>
+    <span class="cm"># Inherits _get_aad_token() and extract() from DynamicsConnector.</span>
+    <span class="cm"># Change only entity name — no other code changes needed.</span></div>
+</div>
+
+<!-- SOCIAL & MARKETING -->
+<div id="social" class="panel">
+<div class="section-label">Mailchimp connector — Marketing API v3, offset pagination</div>
+<div class="code"><span class="cm"># src/connectors/social/mailchimp_connector.py</span>
+<span class="kw">import</span> requests, json
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+<span class="kw">from</span> src.secrets <span class="kw">import</span> get_secrets
+
+
+<span class="kw">class</span> MailchimpConnector(BaseConnector):
+    connector_type = <span class="st">"mailchimp_api"</span>
+    source_system  = <span class="st">"mailchimp"</span>
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        secrets  = get_secrets()
+        api_key  = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"mailchimp-api-key"</span>)
+        <span class="cm"># API key format: key-dcXX. Server prefix is after the dash.</span>
+        dc       = api_key.split(<span class="st">"-"</span>)[-1]
+        base_url = f<span class="st">"https://{dc}.api.mailchimp.com/3.0"</span>
+        auth     = (<span class="st">"anystring"</span>, api_key)   <span class="cm"># Mailchimp uses HTTP Basic auth</span>
+
+        all_campaigns = []
+        offset, count = 0, 100
+        <span class="kw">while</span> True:
+            resp = requests.get(
+                f<span class="st">"{base_url}/campaigns"</span>,
+                auth=auth,
+                params={<span class="st">"count"</span>:count, <span class="st">"offset"</span>:offset,
+                        <span class="st">"fields"</span>:<span class="st">"campaigns.id,campaigns.settings,campaigns.stats"</span>},
+                timeout=30
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            batch = data.get(<span class="st">"campaigns"</span>, [])
+            all_campaigns.extend(batch)
+            <span class="kw">if</span> len(batch) < count:   <span class="cm"># no more pages</span>
+                <span class="kw">break</span>
+            offset += count
+
+        <span class="kw">if not</span> all_campaigns:
+            <span class="kw">return</span> None
+
+        rdd = spark.sparkContext.parallelize(
+            [json.dumps(c) <span class="kw">for</span> c <span class="kw">in</span> all_campaigns]
+        )
+        df = spark.read.json(rdd)
+        <span class="kw">from</span> src.api_ingestion <span class="kw">import</span> flatten_struct_cols
+        <span class="kw">return</span> flatten_struct_cols(df)</div>
+
+<div class="section-label">Social media connector — unified wrapper for Meta, LinkedIn, X</div>
+<div class="code"><span class="cm"># src/connectors/social/social_media_connector.py</span>
+<span class="cm"># Social APIs change frequently and have strict rate limits.</span>
+<span class="cm"># Pattern: one connector per platform, unified output schema.</span>
+<span class="kw">import</span> requests, json
+<span class="kw">from</span> pyspark.sql <span class="kw">import</span> DataFrame, SparkSession
+<span class="kw">from</span> src.connectors.base <span class="kw">import</span> BaseConnector
+<span class="kw">from</span> src.secrets <span class="kw">import</span> get_secrets
+
+
+<span class="kw">class</span> MetaGraphConnector(BaseConnector):
+    connector_type = <span class="st">"meta_graph_api"</span>
+    source_system  = <span class="st">"social_meta"</span>
+    fields:str     = <span class="st">"id,message,created_time,story,likes.summary(true)"</span>
+
+    <span class="kw">def</span> extract(
+        self, spark: SparkSession, config: dict, batch_id: str
+    ) -> DataFrame | None:
+        secrets    = get_secrets()
+        page_token = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"meta-page-token"</span>)
+        page_id    = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"meta-page-id"</span>)
+
+        posts, next_url = [], (
+            f<span class="st">"https://graph.facebook.com/v19.0/{page_id}/posts"</span>
+            f<span class="st">"?fields={self.fields}&access_token={page_token}"</span>
+        )
+        <span class="kw">while</span> next_url:
+            resp = requests.get(next_url, timeout=30)
+            resp.raise_for_status()
+            data     = resp.json()
+            posts.extend(data.get(<span class="st">"data"</span>, []))
+            next_url = data.get(<span class="st">"paging"</span>, {}).get(<span class="st">"next"</span>)
+
+        <span class="kw">if not</span> posts:
+            <span class="kw">return</span> None
+        rdd = spark.sparkContext.parallelize([json.dumps(p) <span class="kw">for</span> p <span class="kw">in</span> posts])
+        df  = spark.read.json(rdd)
+        <span class="kw">from</span> src.api_ingestion <span class="kw">import</span> flatten_struct_cols
+        <span class="kw">return</span> flatten_struct_cols(df)
+
+
+<span class="kw">class</span> LinkedInConnector(BaseConnector):
+    connector_type = <span class="st">"linkedin_api"</span>
+    source_system  = <span class="st">"social_linkedin"</span>
+
+    <span class="kw">def</span> extract(self, spark, config, batch_id):
+        secrets = get_secrets()
+        token   = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"linkedin-access-token"</span>)
+        org_id  = secrets.get(config[<span class="st">"secret_scope"</span>], <span class="st">"linkedin-org-id"</span>)
+        headers = {<span class="st">"Authorization"</span>: f<span class="st">"Bearer {token}"</span>,
+                   <span class="st">"LinkedIn-Version"</span>: <span class="st">"202402"</span>}
+        resp = requests.get(
+            f<span class="st">"https://api.linkedin.com/v2/ugcPosts?q=authors&authors=urn:li:organization:{org_id}"</span>,
+            headers=headers, timeout=30
+        )
+        resp.raise_for_status()
+        data = resp.json().get(<span class="st">"elements"</span>, [])
+        <span class="kw">if not</span> data:
+            <span class="kw">return</span> None
+        rdd = spark.sparkContext.parallelize([json.dumps(p) <span class="kw">for</span> p <span class="kw">in</span> data])
+        <span class="kw">return</span> spark.read.json(rdd)</div>
+
+<div class="warn-box">Social media APIs have the strictest rate limits of all source types. Meta: 200 calls/hour per token. LinkedIn: 100 calls/day on free tier. X/Twitter v2: 500,000 tweets/month on Basic. Always check current rate limits before designing polling frequency — daily batch is safer than hourly for social sources.</div>
+</div>
+
+<!-- REGISTRY & PIPELINE -->
+<div id="registry" class="panel">
+<div class="section-label">Updated NB_02 — now calls the registry, handles all source types in one notebook</div>
+<div class="code"><span class="cm"># notebooks/bronze/NB_02_Bronze_All_Sources_Ingest.py</span>
+<span class="cm"># Replaces NB_02_Bronze_Excel_Ingest and NB_03_Bronze_REST_API_Ingest.</span>
+<span class="cm"># The registry auto-discovers every connector and runs them all.</span>
+<span class="kw">from</span> src.config_loader <span class="kw">import</span> load_config
+<span class="kw">from</span> src.connectors.registry <span class="kw">import</span> ConnectorRegistry
+
+config   = load_config()
+registry = ConnectorRegistry()
+
+<span class="cm"># Run ALL connectors</span>
+results  = registry.run_all(spark, config)
+
+<span class="cm"># Or run only specific source types</span>
+<span class="cm"># results = registry.run_all(spark, config, only=["excel_training","mailchimp"])</span>
+
+summary = registry.summary(results)
+print(f<span class="st">"Ingestion complete: {summary}"</span>)
+
+<span class="cm"># Write run summary to pipeline log</span>
+<span class="kw">from</span> pyspark.sql.functions <span class="kw">import</span> current_timestamp, lit
+<span class="kw">import</span> uuid
+
+log_rows = [
+    (str(uuid.uuid4()), <span class="st">"NB_02_All_Sources"</span>, r.source_system,
+     r.batch_id, r.rows_written, r.status, r.error)
+    <span class="kw">for</span> r <span class="kw">in</span> results
+]
+spark.createDataFrame(
+    log_rows,
+    <span class="st">"log_id STRING, pipeline_name STRING, source_system STRING, "</span>
+    <span class="st">"batch_id STRING, rows_written LONG, status STRING, error_message STRING"</span>
+).withColumn(<span class="st">"end_ts"</span>, current_timestamp()) \
+ .write.format(<span class="st">"delta"</span>).mode(<span class="st">"append"</span>) \
+ .saveAsTable(<span class="st">"Bronze_Lakehouse.control_pipeline_log"</span>)
+
+<span class="cm"># Fail the pipeline if any CRITICAL sources failed</span>
+critical_failures = [r <span class="kw">for</span> r <span class="kw">in</span> results
+                     <span class="kw">if</span> r.status == <span class="st">"FAILED"</span>]
+<span class="kw">if</span> critical_failures:
+    names = [r.source_system <span class="kw">for</span> r <span class="kw">in</span> critical_failures]
+    raise Exception(f<span class="st">"Connectors failed: {names}. See control_pipeline_log."</span>)</div>
+
+<div class="section-label">Adding a new connector — the process is always the same four steps</div>
+<div class="step-row">
+  <div class="step-num">1</div>
+  <div class="step-content"><span class="step-title">Create a new file in the correct category folder</span>e.g. <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 5px;border-radius:3px">src/connectors/platform/quercus_connector.py</code></div>
+</div>
+<div class="step-row">
+  <div class="step-num">2</div>
+  <div class="step-content"><span class="step-title">Extend BaseConnector, set connector_type and source_system, implement extract()</span>The <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 5px;border-radius:3px">run()</code> method is inherited — you never need to implement Bronze write logic yourself.</div>
+</div>
+<div class="step-row">
+  <div class="step-num">3</div>
+  <div class="step-content"><span class="step-title">Add secrets to Azure Key Vault</span>Name them <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 5px;border-radius:3px">{source}-api-key</code> or <code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 5px;border-radius:3px">{source}-client-secret</code> following the existing naming convention.</div>
+</div>
+<div class="step-row">
+  <div class="step-num">4</div>
+  <div class="step-content"><span class="step-title">Add a watermark seed row to control_watermark</span><code style="font-family:var(--font-mono);font-size:11px;background:var(--color-background-secondary);padding:1px 5px;border-radius:3px">INSERT INTO Bronze_Lakehouse.control_watermark VALUES ('quercus', '1900-01-01', 'INIT', 0, 'READY', current_timestamp())</code> — NB_01 can be updated to seed this automatically.</div>
+</div>
+
+<div class="info-box">The ConnectorRegistry auto-discovers the new connector via <code>pkgutil.walk_packages</code> — there is no registration step. As soon as the file exists in the connectors package, it will be picked up on the next pipeline run. No changes to NB_02 or any pipeline definition are needed.</div>
+
+<div class="section-label">config_dev.json updates needed for new source types</div>
+<div class="code">{
+  "connectors": {
+    "enabled": [
+      "excel_training", "excel_medical", "csv_import",
+      "rest_api_lms", "rest_api_hr",
+      "ms_dynamics", "ms_power_pages",
+      "aws_datahub", "aws_hubspot",
+      "mailchimp", "social_meta",
+      "quercus", "tlmf", "ghost_inspector"
+    ],
+    "soap_webservice": {
+      "wsdl_url": "https://webservice.university.ie/service?wsdl",
+      "operation": "GetStudentData"
+    }
+  }
+}</div>
+</div>
+
+<script>
+function show(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>

@@ -1,6 +1,6 @@
-# PwC Contract Success Guide
+# Contract Success Guide
 
-> Extracted from `pwc_contract_success_guide.html` — interactive guide to succeeding in a PwC contract role, covering the first 90 days, how to build reputation, avoid common mistakes, and position for extension.
+> Extracted from `pwc_contract_success_guide.html` — interactive guide to succeeding in a consultancy contract role, covering the first 90 days, how to build reputation, avoid common mistakes, and position for extension.
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### The single most important mindset shift
 
-You are not arriving as a technical resource who executes tasks. You are arriving as a **trusted advisor who happens to be technical**. PwC sells advisory — their managers notice who thinks like a consultant and who thinks like a developer. Your CV proves you can build. Day one starts proving you can *lead*.
+You are not arriving as a technical resource who executes tasks. You are arriving as a **trusted advisor who happens to be technical**. The consultancy sells advisory — their managers notice who thinks like a consultant and who thinks like a developer. Your CV proves you can build. Day one starts proving you can *lead*.
 
 ### Practical preparation
 
@@ -22,7 +22,7 @@ You are not arriving as a technical resource who executes tasks. You are arrivin
 
 **Know your own work** — Re-read the implementation guide and script library. Know the architecture cold — Bronze/Silver/Gold separation rationale, why Direct Lake, why watermark CDC over log-based. Have a crisp one-line answer for each decision.
 
-**Set up your tools** — Have your environment ready on day one. Ask PwC ahead of time what tools you will use (Teams, Azure DevOps, JIRA, Confluence). Arrive with VS Code, Azure Data Studio, and a Fabric trial workspace already configured.
+**Set up your tools** — Have your environment ready on day one. Ask the consultancy ahead of time what tools you will use (Teams, Azure DevOps, JIRA, Confluence). Arrive with VS Code, Azure Data Studio, and a Fabric trial workspace already configured.
 
 ---
 
@@ -45,7 +45,7 @@ You are not arriving as a technical resource who executes tasks. You are arrivin
 
 **Week 4** — Produce the STTM (Source-to-Target Mapping) documentation proactively. This signals you understand the professional standard for data projects.
 
-**Weeks 5–8** — Bronze and Silver pipelines live in DEV. Get all ingestion notebooks running, DQ checks passing, Silver entities loading. Run a weekly status update to the PwC manager — one page, three sections: what was done, what is next, any blockers.
+**Weeks 5–8** — Bronze and Silver pipelines live in DEV. Get all ingestion notebooks running, DQ checks passing, Silver entities loading. Run a weekly status update to the consultancy manager — one page, three sections: what was done, what is next, any blockers.
 
 **Weeks 9–12** — Gold layer and first production dashboard. UAT session with university stakeholders. Capture feedback in a written log.
 
@@ -55,7 +55,7 @@ You are not arriving as a technical resource who executes tasks. You are arrivin
 
 ## Impressing the Manager
 
-### What PwC managers actually watch for
+### What the consultancy managers actually watch for
 
 **Communicate up before you are asked** — Send a brief written update every Friday — even if nothing dramatic happened. Three bullets: completed, in progress, blockers. Managers who have to chase for status updates lose confidence fast.
 
@@ -67,7 +67,7 @@ You are not arriving as a technical resource who executes tasks. You are arrivin
 
 **Own your mistakes fast and clean** — If a pipeline breaks, a DQ check fails, or you miss a deadline — tell the manager before they find out from someone else. Speed of acknowledgement matters far more than the mistake itself.
 
-> PwC managers are often under pressure from their own engagement leads. Make your manager look good to their boss — that is the fastest path to a strong relationship.
+> The consultancy managers are often under pressure from their own engagement leads. Make your manager look good to their boss — that is the fastest path to a strong relationship.
 
 ---
 
@@ -89,7 +89,7 @@ You are not arriving as a technical resource who executes tasks. You are arrivin
 ### Never do these
 
 - Go quiet when things are difficult
-- Disagree with the client in front of the PwC manager
+- Disagree with the client in front of the consultancy manager
 - Promise a delivery date you are not 90% sure of
 - Use jargon in stakeholder meetings
 - Wait to be told what to do next
@@ -115,11 +115,11 @@ Become the person who makes things easier for everyone. Spot things outside your
 
 **Underestimating the stakeholder management side** — This is a university with doctors, surgeons, training managers, and IT staff. Each group has different priorities and different levels of data literacy. Spend time with each user group.
 
-**Scope creep without flagging it** — Every request outside agreed scope must be logged and discussed with the PwC manager before you commit to it.
+**Scope creep without flagging it** — Every request outside agreed scope must be logged and discussed with the consultancy manager before you commit to it.
 
 **Waiting for perfect data before showing something** — Show rough, early, honest prototypes. Frame them correctly. Early visibility builds trust. Late reveals create anxiety.
 
-**Treating the PwC manager as an obstacle rather than an ally** — Your manager has context you do not have. Treat them as a partner. Ask what would make their life easier.
+**Treating the consultancy manager as an obstacle rather than an ally** — Your manager has context you do not have. Treat them as a partner. Ask what would make their life easier.
 
 ---
 
@@ -139,6 +139,6 @@ Become the person who makes things easier for everyone. Spot things outside your
 
 ### The question to ask yourself every Friday
 
-> *"If I were the PwC manager reviewing this week, would I feel confident that this contractor is in control, communicating clearly, and making the engagement better — or would I have any doubt?"*
+> *"If I were the consultancy manager reviewing this week, would I feel confident that this contractor is in control, communicating clearly, and making the engagement better — or would I have any doubt?"*
 
 If the answer is anything other than a clear yes, fix it before Monday.
