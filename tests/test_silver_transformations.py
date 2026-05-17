@@ -2,6 +2,15 @@ import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
 
+DATA_SCHEMA = StructType([
+    StructField("StudentID", StringType()),
+    StructField("CourseCode", StringType()),
+    StructField("EnrolDate", StringType()),
+    StructField("CompletionDate", StringType()),
+    StructField("Score", StringType()),
+    StructField("Status", StringType()),
+])
+
 from src.transformations.silver_training import transform_training_enrolments
 
 
@@ -35,8 +44,7 @@ class TestTransformTrainingEnrolments:
 
     def test_trim_and_upper(self, spark):
         data = [("  abc123  ", "  XYZ  ", "01/01/2023", None, None, "A")]
-        schema = ["StudentID", "CourseCode", "EnrolDate", "CompletionDate", "Score", "Status"]
-        df_input = spark.createDataFrame(data, schema)
+        df_input = spark.createDataFrame(data, DATA_SCHEMA)
 
         df_output = transform_training_enrolments(df_input)
         row = df_output.collect()[0]
@@ -51,8 +59,7 @@ class TestTransformTrainingEnrolments:
             ("S3", "C3", "01/01/2023", None, None, "D"),
             ("S4", "C4", "01/01/2023", None, None, "X"),
         ]
-        schema = ["StudentID", "CourseCode", "EnrolDate", "CompletionDate", "Score", "Status"]
-        df_input = spark.createDataFrame(data, schema)
+        df_input = spark.createDataFrame(data, DATA_SCHEMA)
 
         df_output = transform_training_enrolments(df_input)
         rows = {r["student_id"]: r for r in df_output.collect()}
@@ -68,8 +75,7 @@ class TestTransformTrainingEnrolments:
 
     def test_null_score_cast_to_zero(self, spark):
         data = [("S1", "C1", "01/01/2023", None, None, "C")]
-        schema = ["StudentID", "CourseCode", "EnrolDate", "CompletionDate", "Score", "Status"]
-        df_input = spark.createDataFrame(data, schema)
+        df_input = spark.createDataFrame(data, DATA_SCHEMA)
 
         df_output = transform_training_enrolments(df_input)
         row = df_output.collect()[0]
@@ -92,11 +98,10 @@ class TestTransformTrainingEnrolments:
         assert df_output.count() == 0
 
     def test_row_hash_changes_on_data_change(self, spark):
-        schema = ["StudentID", "CourseCode", "EnrolDate", "CompletionDate", "Score", "Status"]
         data_a = [("S1", "C1", "01/01/2023", None, "80", "C")]
         data_b = [("S1", "C1", "01/01/2023", None, "90", "C")]
 
-        hash_a = transform_training_enrolments(spark.createDataFrame(data_a, schema)).collect()[0]["row_hash"]
-        hash_b = transform_training_enrolments(spark.createDataFrame(data_b, schema)).collect()[0]["row_hash"]
+        hash_a = transform_training_enrolments(spark.createDataFrame(data_a, DATA_SCHEMA)).collect()[0]["row_hash"]
+        hash_b = transform_training_enrolments(spark.createDataFrame(data_b, DATA_SCHEMA)).collect()[0]["row_hash"]
 
         assert hash_a != hash_b
