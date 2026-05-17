@@ -83,13 +83,12 @@ Notebooks are connected by three things:
 ```mermaid
 flowchart TD
     subgraph Sources["Sources"]
-        A[Excel Files] --> NB_02
-        B[REST APIs] --> NB_03
+        A[Excel / CSV Files] --> NB_02
+        B[REST APIs / Platforms] --> NB_02
     end
 
     subgraph Bronze["Bronze_Lakehouse"]
-        NB_02["NB_02_Bronze_Excel_Ingest"] --> BT1[(bronze_excel_*)]
-        NB_03["NB_03_Bronze_REST_API_Ingest"] --> BT2[(bronze_rest_*)]
+        NB_02["NB_02_Bronze_All_Sources_Ingest"] --> BT[(bronze_tables)]
         NB_01["NB_01_Create_Control_Tables"] --> CT[(control_watermark\nfile_ingestion_registry\napi_call_log)]
     end
 
@@ -111,19 +110,19 @@ flowchart TD
     end
 
     subgraph Orchestration["Orchestration (Planned)"]
-        PL_B["PL_Daily_Bronze"] --> NB_02 & NB_03
+        PL_B["PL_Daily_Bronze"] --> NB_02
         PL_S["PL_Daily_Silver"] --> NB_04
         PL_G["PL_Daily_Gold"] --> NB_07 --> NB_06 & NB_09
         PL_W["PL_Weekly_Maint."] --> NB_10 & NB_11
     end
 
-    BT1 & BT2 --> NB_04 & NB_05
-    CT --> NB_02 & NB_03 & NB_04 & NB_08
+    BT --> NB_04 & NB_05
+    CT --> NB_02 & NB_04 & NB_08
     ST --> NB_07
     ST --> NB_06 & NB_09
 
     Config[("config/*.json")] -->|load_config()| NB_01
-    Config --> NB_02 & NB_03 & NB_04 & NB_05 & NB_06
+    Config --> NB_02 & NB_04 & NB_05 & NB_06
     Config --> NB_07 & NB_08 & NB_09 & NB_10 & NB_11
 ```
 

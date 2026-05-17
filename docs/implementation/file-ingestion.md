@@ -49,7 +49,7 @@ Create a Delta table named `Bronze_Lakehouse.file_ingestion_registry` to track e
 
 Version 3 adds a dedicated schema drift audit table: `Bronze_Lakehouse.schema_change_log`.
 
-NB_02 compares the columns in each incoming Excel file with the expected baseline for that source. New or missing columns are logged before the file is written to Bronze.
+The Excel connector in the connector framework compares the columns in each incoming file with the expected baseline for that source. New or missing columns are logged to `schema_change_log` before the file is written to Bronze.
 
 | Column | Purpose |
 | --- | --- |
@@ -98,7 +98,7 @@ WHERE resolved = false;
 1. Review unresolved entries in `schema_change_log`.
 2. Confirm whether the change is intentional or a source error.
 3. Update the STTM document.
-4. Update `EXPECTED_COLUMNS` in `NB_02_Bronze_Excel_Ingest.py`.
+4. Update the expected columns in the relevant connector's `extract()` method (e.g. `src/connectors/file/excel_connector.py`).
 5. Update Silver mappings if the new column is required downstream.
 6. Mark the schema change as resolved after review.
 

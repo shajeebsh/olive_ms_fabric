@@ -34,6 +34,13 @@ sources = [
     ("excel_facilities", "1900-01-01 00:00:00", "INIT", 0, "READY"),
     ("rest_api_lms", "1900-01-01 00:00:00", "INIT", 0, "READY"),
     ("rest_api_hr", "1900-01-01 00:00:00", "INIT", 0, "READY"),
+    ("csv_import", "1900-01-01 00:00:00", "INIT", 0, "READY"),
+    ("ghost_inspector", "1900-01-01 00:00:00", "INIT", 0, "READY"),
+    ("quercus", "1900-01-01 00:00:00", "INIT", 0, "READY"),
+    ("tlmf", "1900-01-01 00:00:00", "INIT", 0, "READY"),
+    ("ms_dynamics_contacts", "1900-01-01 00:00:00", "INIT", 0, "READY"),
+    ("aws_datahub", "1900-01-01 00:00:00", "INIT", 0, "READY"),
+    ("ms_power_pages", "1900-01-01 00:00:00", "INIT", 0, "READY"),
 ]
 
 df_sources = spark.createDataFrame(

@@ -1,7 +1,11 @@
+import os
 import pytest
 from pyspark.sql import SparkSession
 
 from src.config_loader import lakehouse_table, load_config
+
+CANT_RUN = not os.environ.get("FABRIC_ENVIRONMENT")
+REASON = "Integration test — requires FABRIC_ENVIRONMENT to be set"
 
 
 @pytest.fixture(scope="session")
@@ -14,6 +18,7 @@ def config():
     return load_config()
 
 
+@pytest.mark.skipif(CANT_RUN, reason=REASON)
 def test_gold_tables_exist(spark, config):
     tables = [t.name for t in spark.catalog.listTables(config["lakehouses"]["gold"])]
     expected_tables = ["dim_student", "dim_course", "fact_training_completion"]
@@ -22,6 +27,7 @@ def test_gold_tables_exist(spark, config):
         assert table in tables
 
 
+@pytest.mark.skipif(CANT_RUN, reason=REASON)
 def test_gold_fact_completeness(spark, config):
     fact_df = spark.table(lakehouse_table(config, "gold", "fact_training_completion"))
 

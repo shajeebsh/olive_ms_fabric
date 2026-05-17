@@ -14,10 +14,9 @@ fabric-university-platform/          ← root repo
 ├── notebooks/                       ← all PySpark notebooks
 │   ├── bronze/
 │   │   ├── NB_00_Data_Profiling.ipynb
-│   │   ├── NB_02_Bronze_Excel_Ingest.ipynb
-│   │   └── NB_03_Bronze_REST_API_Ingest.ipynb
+│   │   └── NB_02_Bronze_All_Sources_Ingest.ipynb
 │   ├── silver/
-│   │   ├── NB_04_Silver_Transformation.ipynb
+│   │   ├── NB_04_Silver_Training_Enrolments.ipynb
 │   │   └── NB_05_Bronze_to_Silver_Streaming.ipynb
 │   ├── gold/
 │   │   ├── NB_06_Gold_Dimensional_Model.ipynb
@@ -74,7 +73,7 @@ main                          ← PROD workspace tracks this branch
 ## Deployment Pipeline — How Code Moves DEV → TEST → PROD
 
 ### Step 1 — Engineer writes code in UNIV-DEV workspace `DEV`
-Open a Fabric Notebook in UNIV-DEV. Write and test NB_04_Silver_Transformation. When ready, click **Sync** in the Fabric Git panel — this commits the notebook to your `feature/NB-04-silver-staff` branch in Azure DevOps automatically.
+Open a Fabric Notebook in UNIV-DEV. Write and test NB_04_Silver_Training_Enrolments. When ready, click **Sync** in the Fabric Git panel — this commits the notebook to your `feature/NB-04-silver-staff` branch in Azure DevOps automatically.
 
 **↓**
 
@@ -234,12 +233,12 @@ UNIV-DEV workspace → top bar → Git branch indicator
 Now your DEV workspace reflects your feature branch. Any notebook you edit here will be committed to that branch.
 
 ### 4. Edit the notebook in UNIV-DEV
-Open NB_04_Silver_Transformation in DEV. Make the change. Run it against DEV data. DQ checks pass. The Fabric Git panel shows the notebook as "Modified".
+Open NB_04_Silver_Training_Enrolments in DEV. Make the change. Run it against DEV data. DQ checks pass. The Fabric Git panel shows the notebook as "Modified".
 
 ### 5. Commit to your feature branch
 ```
 Fabric workspace → Source control panel (top right)
-→ Changes: NB_04_Silver_Transformation.ipynb (modified)
+→ Changes: NB_04_Silver_Training_Enrolments.ipynb (modified)
 → Commit message: "UNIV-47: add academic_semester derived column"
 → Commit and push
 ```

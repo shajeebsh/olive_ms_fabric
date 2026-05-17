@@ -12,23 +12,26 @@
 
 ## Failure Handling
 
-### Bronze Excel Pipeline Fails
+### Unified Bronze Ingestion Fails (NB_02)
 
 Likely causes:
 
 - Filename does not match convention.
-- Excel sheet name changed.
+- Excel sheet name changed or CSV format changed.
 - Header row changed.
 - File is corrupt or password-protected.
+- Connector config or secret missing.
+- API endpoint or token expired.
 
 Resolution:
 
-1. Check pipeline run error.
-2. Check `file_ingestion_registry`.
+1. Check `control_pipeline_log` for the failed connector's `error_message`.
+2. Check `file_ingestion_registry` for file-level errors.
 3. Open rejected file details.
-4. Confirm expected sheet and headers.
+4. Confirm expected sheet and headers per the connector's `extract()` logic.
 5. Update STTM if the source contract changed.
-6. Reprocess only after the cause is understood.
+6. Fix the connector's `extract()` method or config as needed — no changes to NB_02 itself.
+7. Reprocess only after the cause is understood.
 
 ### REST API Returns 401 or 403
 
@@ -76,7 +79,7 @@ Resolution:
 2. Compare the file headers against the STTM.
 3. Confirm whether the change is intentional with the source owner.
 4. Update `docs/implementation/source-to-target-mapping.md`.
-5. Update `EXPECTED_COLUMNS` in `NB_02_Bronze_Excel_Ingest.py`.
+5. Update the expected columns in the relevant connector (e.g. `src/connectors/file/excel_connector.py`).
 6. Update Silver mapping code if the column is required.
 7. Mark the schema change as resolved.
 
