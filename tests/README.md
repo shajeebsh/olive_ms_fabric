@@ -1,9 +1,27 @@
 # Tests
 
+## Local Setup (Recommended)
+
+It is highly recommended to use a virtual environment to run tests locally to avoid dependency conflicts.
+
+```bash
+# 1. Create virtual environment
+python3 -m venv .venv
+
+# 2. Activate virtual environment
+# On macOS/Linux:
+source .venv/bin/activate
+# On Windows:
+# .venv\Scripts\activate
+
+# 3. Install dependencies
+pip install --upgrade pip
+pip install -r requirements-dev.txt
+```
+
 ## Running Tests
 
 ```bash
-pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```
 
