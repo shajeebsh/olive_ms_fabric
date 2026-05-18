@@ -10,6 +10,7 @@ from src.api_ingestion import (
     _token_cache,
     flatten_struct_cols,
 )
+from src.connectors.base import BaseConnector
 
 
 @pytest.fixture(autouse=True)
@@ -23,37 +24,23 @@ def spark():
     return SparkSession.builder.master("local[*]").appName("test-api").getOrCreate()
 
 
-class TestCircuitBreaker:
-
-    def test_circuit_starts_closed(self):
-        assert is_circuit_open("api_a") is False
-
-    def test_circuit_opens_after_threshold(self):
-        for _ in range(5):
-            _record_failure("api_a")
-        assert is_circuit_open("api_a") is True
-
-    def test_circuit_remains_below_threshold(self):
-        for _ in range(3):
-            _record_failure("api_b")
-        assert is_circuit_open("api_b") is False
-
-    def test_reset_closes_circuit(self):
-        for _ in range(5):
-            _record_failure("api_c")
-        _reset_circuit("api_c")
-        assert is_circuit_open("api_c") is False
-
-    def test_independent_per_api(self):
-        for _ in range(5):
-            _record_failure("failing_api")
-        assert is_circuit_open("failing_api") is True
-        assert is_circuit_open("healthy_api") is False
+MINIMAL_CONFIG = {"lakehouses": {"bronze": "test_lh"}}
 
 
-class TestFlattenStructCols:
+class _CircuitAwareConnector(BaseConnector):
+    connector_type = "test_cb"
 
-    def test_flatten_single_struct(self, spark):
+    def extract(self, spark, config, batch_id):
+        if is_circuit_open(self.source_system):
+            return None
+        return spark.createDataFrame([("ok",)], ["col"])
+
+
+class _NestedStructConnector(BaseConnector):
+    connector_type = "test_nested"
+    source_system = "nested_source"
+
+    def extract(self, spark, config, batch_id):
         schema = StructType([
             StructField("id", IntegerType()),
             StructField("nested", StructType([
@@ -61,22 +48,112 @@ class TestFlattenStructCols:
                 StructField("b", StringType()),
             ])),
         ])
-        df = spark.createDataFrame([(1, ("x", "y"))], schema)
-        flat = flatten_struct_cols(df)
-        cols = flat.columns
-        assert "nested_a" in cols
-        assert "nested_b" in cols
-        assert "nested" not in cols
-        assert flat.collect()[0]["nested_a"] == "x"
+        return spark.createDataFrame([(1, ("x", "y"))], schema)
 
-    def test_flatten_multiple_structs(self, spark):
+
+class _MultiNestedConnector(BaseConnector):
+    connector_type = "test_multi_nested"
+    source_system = "multi_nested_source"
+
+    def extract(self, spark, config, batch_id):
         inner1 = StructType([StructField("p", StringType())])
         inner2 = StructType([StructField("q", StringType())])
         schema = StructType([
             StructField("s1", inner1),
             StructField("s2", inner2),
         ])
-        df = spark.createDataFrame([(("a",), ("b",))], schema)
+        return spark.createDataFrame([(("a",), ("b",))], schema)
+
+
+class _FlatDataConnector(BaseConnector):
+    connector_type = "test_flat"
+    source_system = "flat_source"
+
+    def extract(self, spark, config, batch_id):
+        return spark.createDataFrame([(1, "hello")], ["id", "name"])
+
+
+class _MixedStructConnector(BaseConnector):
+    connector_type = "test_mixed"
+    source_system = "mixed_source"
+
+    def extract(self, spark, config, batch_id):
+        schema = StructType([
+            StructField("id", IntegerType()),
+            StructField("data", StructType([StructField("val", StringType())])),
+            StructField("name", StringType()),
+        ])
+        return spark.createDataFrame([(1, ("inner",), "test")], schema)
+
+
+class TestConnectorCircuitBreaker:
+
+    def test_extract_returns_data_when_circuit_closed(self, spark):
+        c = _CircuitAwareConnector(source_system="api_a")
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
+        assert df is not None
+        assert df.collect()[0]["col"] == "ok"
+
+    def test_extract_skipped_when_circuit_open(self, spark):
+        c = _CircuitAwareConnector(source_system="api_open")
+        for _ in range(5):
+            _record_failure("api_open")
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
+        assert df is None
+
+    def test_circuit_remains_closed_below_threshold(self, spark):
+        c = _CircuitAwareConnector(source_system="api_below")
+        for _ in range(3):
+            _record_failure("api_below")
+        assert is_circuit_open("api_below") is False
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
+        assert df is not None
+
+    def test_reset_closes_circuit(self, spark):
+        c = _CircuitAwareConnector(source_system="api_reset")
+        for _ in range(5):
+            _record_failure("api_reset")
+        _reset_circuit("api_reset")
+        assert is_circuit_open("api_reset") is False
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
+        assert df is not None
+
+    def test_run_returns_skipped_when_circuit_open(self, spark):
+        c = _CircuitAwareConnector(source_system="api_run_open")
+        for _ in range(5):
+            _record_failure("api_run_open")
+        result = c.run(spark, MINIMAL_CONFIG)
+        assert result.status == "SKIPPED"
+        assert result.rows_written == 0
+
+    def test_run_returns_failed_when_circuit_closed_but_delta_fails(self, spark):
+        c = _CircuitAwareConnector(source_system="api_run_closed")
+        result = c.run(spark, MINIMAL_CONFIG)
+        assert result.status == "FAILED"
+
+    def test_independent_per_api(self, spark):
+        failing = _CircuitAwareConnector(source_system="failing_api")
+        healthy = _CircuitAwareConnector(source_system="healthy_api")
+        for _ in range(5):
+            _record_failure("failing_api")
+        assert failing.extract(spark, MINIMAL_CONFIG, "b1") is None
+        assert healthy.extract(spark, MINIMAL_CONFIG, "b1") is not None
+
+
+class TestConnectorFlattenStructCols:
+
+    def test_flatten_single_struct(self, spark):
+        c = _NestedStructConnector()
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
+        flat = flatten_struct_cols(df)
+        assert "nested_a" in flat.columns
+        assert "nested_b" in flat.columns
+        assert "nested" not in flat.columns
+        assert flat.collect()[0]["nested_a"] == "x"
+
+    def test_flatten_multiple_structs(self, spark):
+        c = _MultiNestedConnector()
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
         flat = flatten_struct_cols(df)
         assert "s1_p" in flat.columns
         assert "s2_q" in flat.columns
@@ -84,17 +161,14 @@ class TestFlattenStructCols:
         assert "s2" not in flat.columns
 
     def test_no_struct_cols_unchanged(self, spark):
-        df = spark.createDataFrame([(1, "hello")], ["id", "name"])
+        c = _FlatDataConnector()
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
         flat = flatten_struct_cols(df)
         assert flat.columns == ["id", "name"]
 
     def test_non_struct_types_untouched(self, spark):
-        schema = StructType([
-            StructField("id", IntegerType()),
-            StructField("data", StructType([StructField("val", StringType())])),
-            StructField("name", StringType()),
-        ])
-        df = spark.createDataFrame([(1, ("inner",), "test")], schema)
+        c = _MixedStructConnector()
+        df = c.extract(spark, MINIMAL_CONFIG, "b1")
         flat = flatten_struct_cols(df)
         assert "data_val" in flat.columns
         assert "id" in flat.columns
